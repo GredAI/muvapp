@@ -124,6 +124,16 @@
   .tips{list-style:none; padding:0; margin:0; font-size:14px; line-height:1.9; color:var(--text-dim);}
   .tips li:before{content:"✓ "; color:var(--good); font-weight:700;}
   .complete-emoji{font-size:56px; margin-bottom:12px;}
+  .week-plan{display:none; flex-direction:column; gap:8px; margin-bottom:16px;}
+  .week-plan.open{display:flex;}
+  .week-plan-row{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; display:flex; flex-direction:column; gap:2px;}
+  .week-plan-row.today{border-color:var(--accent); background:var(--bg-card2);}
+  .week-plan-row .wpr-top{display:flex; justify-content:space-between; align-items:center;}
+  .week-plan-row .wpr-day{font-weight:800; font-size:14px;}
+  .week-plan-row.today .wpr-day{color:var(--accent);}
+  .week-plan-row .wpr-class{font-size:13px; color:var(--text);}
+  .week-plan-row .wpr-extra{font-size:12px; color:var(--text-dim); margin-top:2px;}
+  .week-toggle{background:none; border:none; color:var(--accent); font-size:13px; font-weight:700; padding:10px 0 4px; text-align:center; width:100%;}
 </style>
 </head>
 <body>
@@ -140,14 +150,19 @@
     </div>
 
     <div class="today-card" id="today-card"></div>
+    <button class="week-toggle" id="week-toggle-btn" onclick="toggleWeekView()">📅 Vedi la settimana intera</button>
+    <div class="week-plan" id="week-plan"></div>
 
     <div class="chips" id="category-chips"></div>
 
     <div id="routine-list"></div>
 
     <div class="card">
-      <h2 style="font-size:16px; margin-bottom:10px;">Consigli importanti</h2>
-      <ul class="tips">
+      <h2 style="font-size:16px; margin-bottom:0; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleTips()">
+        <span>Consigli importanti</span>
+        <span id="tips-chevron" style="color:var(--text-dim); font-size:13px;">▾</span>
+      </h2>
+      <ul class="tips" id="tips-list" style="display:none; margin-top:10px;">
         <li>Mantieni sempre il core attivo e la schiena dritta</li>
         <li>Esegui il movimento in modo lento e controllato</li>
         <li>Respira: inspira in apertura, espira nello sforzo</li>
@@ -180,11 +195,15 @@
       <div class="label">ripetizioni per serie</div>
     </div>
 
-    <div class="sets-dots" id="sets-dots"></div>
+    <div class="row" style="align-items:center; margin-bottom:20px;">
+      <div class="sets-dots" id="sets-dots" style="margin-bottom:0;"></div>
+      <button class="btn btn-ghost" style="width:auto; flex:0; padding:8px 12px; font-size:13px;" onclick="resetExerciseProgress()">↺ Reset</button>
+    </div>
 
     <div class="instructions" id="ex-instructions"></div>
 
-    <button class="btn btn-primary" id="btn-complete-set" onclick="completeSet()">Serie completata</button>
+    <button class="btn btn-primary" id="btn-complete-set" onclick="onSetButton()">Inizia Serie</button>
+    <button class="btn btn-ghost" id="btn-cancel-set" style="display:none; margin-top:8px;" onclick="cancelActiveSet()">Annulla</button>
 
     <div class="nav-row">
       <button class="iconbtn" onclick="prevExercise()">←</button>
@@ -218,6 +237,7 @@
   </div>
   <div class="overlay-actions">
     <button class="btn btn-secondary" onclick="adjustRest(-15)">-15s</button>
+    <button class="btn btn-secondary" onclick="pauseRest()" id="rest-pause-btn">Pausa</button>
     <button class="btn btn-secondary" onclick="adjustRest(15)">+15s</button>
   </div>
   <div class="overlay-actions">
@@ -628,7 +648,7 @@ function todayPlan(){
 /* ============ STATO ============ */
 let settings = JSON.parse(localStorage.getItem('ac_settings') || '{"sound":true,"restDefault":75}');
 let history = JSON.parse(localStorage.getItem('ac_history') || '[]');
-let session = null; // {routine, exIndex, setIndex}
+let session = null; // {routine, exIndex, progress:[], setPhase}
 let wakeLock = null;
 let audioCtx = null;
 let restState = null, restTimerId = null;
@@ -682,6 +702,37 @@ function renderCategoryChips(){
   wrap.innerHTML = cats.map(c => `<div class="chip${c===activeCategory?' active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
 }
 function setCategory(c){ activeCategory = c; renderHome(); }
+function toggleTips(){
+  const list = document.getElementById('tips-list');
+  const chevron = document.getElementById('tips-chevron');
+  const isOpen = list.style.display === 'block';
+  list.style.display = isOpen ? 'none' : 'block';
+  chevron.textContent = isOpen ? '▾' : '▴';
+}
+let weekViewOpen = false;
+function toggleWeekView(){
+  weekViewOpen = !weekViewOpen;
+  document.getElementById('week-plan').classList.toggle('open', weekViewOpen);
+  document.getElementById('week-toggle-btn').textContent = weekViewOpen ? '▲ Nascondi settimana' : '📅 Vedi la settimana intera';
+  if(weekViewOpen) renderWeekPlan();
+}
+function renderWeekPlan(){
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  const wrap = document.getElementById('week-plan');
+  wrap.innerHTML = WEEKLY_PLAN.map((d, i) => {
+    const routine = ROUTINES.find(r => r.id === d.routineId);
+    return `
+      <div class="week-plan-row${i===todayIdx?' today':''}">
+        <div class="wpr-top">
+          <span class="wpr-day">${d.day}${i===todayIdx?' · oggi':''}</span>
+          ${routine ? `<button class="btn btn-secondary" style="width:auto; padding:6px 12px; font-size:12px;" onclick="startRoutineById('${routine.id}')">Apri</button>` : ''}
+        </div>
+        <div class="wpr-class">${d.classLabel}</div>
+        <div class="wpr-extra">${d.extra || ''}${d.cardio ? ' · 🏃 ' + d.cardio : ''}</div>
+      </div>
+    `;
+  }).join('');
+}
 function renderHome(){
   renderTodayCard();
   renderCategoryChips();
@@ -712,7 +763,8 @@ function renderHome(){
 
 /* ============ SESSIONE ============ */
 function startRoutine(idx){
-  session = { routine: ROUTINES[idx], exIndex: 0, setIndex: 0 };
+  const routine = ROUTINES[idx];
+  session = { routine, exIndex: 0, progress: new Array(routine.exercises.length).fill(0), setPhase: 'ready' };
   showView('view-session');
   requestWakeLock();
   renderExercise();
@@ -722,6 +774,7 @@ function startRoutineById(id){
   if(idx >= 0) startRoutine(idx);
 }
 function currentExercise(){ return session.routine.exercises[session.exIndex]; }
+function currentProgress(){ return session.progress[session.exIndex]; }
 
 function renderExercise(){
   const r = session.routine, ex = currentExercise();
@@ -739,37 +792,70 @@ function renderExercise(){
   document.getElementById('ex-reps').textContent = ex.reps;
   document.getElementById('ex-instructions').textContent = ex.instr;
   renderSetDots(ex);
-  document.getElementById('btn-complete-set').textContent = session.setIndex >= ex.sets ? 'Esercizio completato' : 'Serie completata';
+  renderSetButton(ex);
+}
+function renderSetButton(ex){
+  const progress = currentProgress();
+  const btn = document.getElementById('btn-complete-set');
+  const cancelBtn = document.getElementById('btn-cancel-set');
+  if(progress >= ex.sets){
+    btn.textContent = 'Esercizio completato ✓ — vai al prossimo';
+    cancelBtn.style.display = 'none';
+  } else if(session.setPhase === 'active'){
+    btn.textContent = `Segna Serie ${progress+1} completata`;
+    cancelBtn.style.display = 'block';
+  } else {
+    btn.textContent = `Inizia Serie ${progress+1}`;
+    cancelBtn.style.display = 'none';
+  }
 }
 function renderSetDots(ex){
   const wrap = document.getElementById('sets-dots');
   wrap.innerHTML = '';
+  const progress = currentProgress();
   for(let i=0;i<ex.sets;i++){
     const d = document.createElement('div');
-    d.className = 'setdot' + (i < session.setIndex ? ' done' : (i === session.setIndex ? ' current' : ''));
-    d.textContent = i < session.setIndex ? '✓' : (i+1);
+    d.className = 'setdot' + (i < progress ? ' done' : (i === progress ? ' current' : ''));
+    d.textContent = i < progress ? '✓' : (i+1);
     wrap.appendChild(d);
   }
 }
-function completeSet(){
+function onSetButton(){
   const ex = currentExercise();
-  if(session.setIndex >= ex.sets){ goToNextExerciseOrFinish(); return; }
-  session.setIndex++;
-  renderSetDots(ex);
-  beep(880,0.1); buzz(30);
-  if(session.setIndex >= ex.sets){
-    document.getElementById('btn-complete-set').textContent = 'Esercizio completato';
+  const progress = currentProgress();
+  if(progress >= ex.sets){ goToNextExerciseOrFinish(); return; }
+  if(session.setPhase === 'ready'){
+    session.setPhase = 'active';
+    renderSetButton(ex);
+    renderSetDots(ex);
     return;
   }
+  session.progress[session.exIndex]++;
+  session.setPhase = 'ready';
+  renderSetDots(ex);
+  renderSetButton(ex);
+  beep(880,0.1); buzz(30);
+  if(currentProgress() >= ex.sets){ return; }
   const restTime = (ex.rest !== undefined) ? ex.rest : (session.routine.restSeconds || settings.restDefault);
   if(restTime > 0) startRest(restTime);
 }
+function cancelActiveSet(){
+  session.setPhase = 'ready';
+  const ex = currentExercise();
+  renderSetButton(ex);
+  renderSetDots(ex);
+}
+function resetExerciseProgress(){
+  session.progress[session.exIndex] = 0;
+  session.setPhase = 'ready';
+  renderExercise();
+}
 function goToNextExerciseOrFinish(){
   if(session.exIndex + 1 >= session.routine.exercises.length){ finishRoutine(); }
-  else { session.exIndex++; session.setIndex = 0; renderExercise(); }
+  else { session.exIndex++; session.setPhase = 'ready'; renderExercise(); }
 }
-function nextExercise(){ if(session.exIndex+1 < session.routine.exercises.length){ session.exIndex++; session.setIndex=0; renderExercise(); } }
-function prevExercise(){ if(session.exIndex>0){ session.exIndex--; session.setIndex=0; renderExercise(); } }
+function nextExercise(){ if(session.exIndex+1 < session.routine.exercises.length){ session.exIndex++; session.setPhase='ready'; renderExercise(); } }
+function prevExercise(){ if(session.exIndex>0){ session.exIndex--; session.setPhase='ready'; renderExercise(); } }
 function skipExercise(){ goToNextExerciseOrFinish(); }
 function exitSession(){ releaseWakeLock(); session=null; showView('view-home'); renderHome(); }
 function finishRoutine(){
@@ -791,13 +877,18 @@ function showView(id){
 /* ============ REST TIMER ============ */
 function startRest(seconds){
   ensureAudio();
-  restState = { total: seconds, remaining: seconds };
+  restState = { total: seconds, remaining: seconds, paused: false };
   document.getElementById('rest-title').textContent = 'Recupero prima della prossima serie';
+  document.getElementById('rest-pause-btn').textContent = 'Pausa';
   updateRestDisplay();
   document.getElementById('overlay-rest').classList.add('active');
+  runRestTick();
+}
+function runRestTick(){
   clearInterval(restTimerId);
-  const endTime = Date.now() + seconds*1000;
+  let endTime = Date.now() + restState.remaining*1000;
   restTimerId = setInterval(()=>{
+    if(restState.paused){ endTime = Date.now() + restState.remaining*1000; return; }
     const remaining = Math.max(0, Math.round((endTime - Date.now())/1000));
     restState.remaining = remaining;
     updateRestDisplay();
@@ -816,16 +907,13 @@ function adjustRest(delta){
   if(!restState) return;
   restState.total = Math.max(10, restState.total + delta);
   restState.remaining = Math.max(0, restState.remaining + delta);
-  clearInterval(restTimerId);
   updateRestDisplay();
-  const endTime = Date.now() + restState.remaining*1000;
-  restTimerId = setInterval(()=>{
-    const remaining = Math.max(0, Math.round((endTime - Date.now())/1000));
-    restState.remaining = remaining;
-    updateRestDisplay();
-    if(remaining <= 3 && remaining > 0) beep(660,0.08);
-    if(remaining <= 0){ clearInterval(restTimerId); beep(1046,0.25); buzz([60,40,60]); closeRestOverlay(); }
-  }, 250);
+  runRestTick();
+}
+function pauseRest(){
+  if(!restState) return;
+  restState.paused = !restState.paused;
+  document.getElementById('rest-pause-btn').textContent = restState.paused ? 'Riprendi' : 'Pausa';
 }
 function skipRest(){ clearInterval(restTimerId); closeRestOverlay(); }
 function closeRestOverlay(){ document.getElementById('overlay-rest').classList.remove('active'); }
