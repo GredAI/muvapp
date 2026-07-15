@@ -49,8 +49,25 @@
   .routine-card .name{font-size:18px; font-weight:700;}
   .badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
   .dot{width:10px; height:10px; border-radius:50%; display:inline-block;}
-  .dot.red{background:var(--red);} .dot.blue{background:var(--blue);} .dot.green{background:var(--green);}
   .meta{display:flex; gap:14px; color:var(--text-dim); font-size:13px; margin-top:6px;}
+  .chips{display:flex; gap:8px; overflow-x:auto; padding:2px 0 14px; -webkit-overflow-scrolling:touch;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{flex-shrink:0; background:var(--bg-card2); border:1px solid var(--border); color:var(--text-dim); font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px;}
+  .chip.active{background:var(--accent); border-color:var(--accent); color:#1a0e02;}
+  .today-card{background:linear-gradient(135deg, var(--bg-card2), var(--bg-card)); border:1px solid var(--accent-dim); border-radius:var(--radius); padding:16px; margin-bottom:16px;}
+  .today-card .today-label{color:var(--accent); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;}
+  .today-card .today-class{font-size:19px; font-weight:800; margin-bottom:2px;}
+  .today-card .today-sub{color:var(--text-dim); font-size:13px; margin-bottom:12px;}
+  .week-row{display:flex; gap:6px; overflow-x:auto; padding:10px 0 2px;}
+  .week-day{flex-shrink:0; text-align:center; background:var(--bg-card2); border:1px solid var(--border); border-radius:12px; padding:8px 10px; font-size:11px; color:var(--text-dim); min-width:64px;}
+  .week-day.today{border-color:var(--accent); color:var(--text);}
+  .week-day .wd-name{font-weight:700; font-size:12px; color:var(--text); margin-bottom:2px;}
+  .section-label{color:var(--accent); font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px;}
+  .load-badge{display:inline-block; background:var(--bg-card2); border:1px solid var(--border); border-radius:8px; padding:2px 8px; font-size:12px; color:var(--text-dim); margin-left:8px;}
+  .warmup-badge{display:inline-block; background:var(--accent-dim); color:var(--accent); border-radius:8px; padding:2px 8px; font-size:11px; font-weight:700; margin-left:8px; text-transform:uppercase;}
+  .notes-list{list-style:none; padding:0; margin:0; font-size:14px; line-height:1.7; color:var(--text-dim);}
+  .notes-list li{padding:8px 0; border-bottom:1px solid var(--border);}
+  .notes-list li:last-child{border-bottom:none;}
   .btn{border:none; border-radius:14px; padding:16px; font-size:16px; font-weight:700; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;}
   .btn-primary{background:var(--accent); color:#1a0e02;}
   .btn-secondary{background:var(--bg-card2); color:var(--text); border:1px solid var(--border);}
@@ -122,6 +139,10 @@
       <button class="iconbtn" onclick="openSettings()">⚙️</button>
     </div>
 
+    <div class="today-card" id="today-card"></div>
+
+    <div class="chips" id="category-chips"></div>
+
     <div id="routine-list"></div>
 
     <div class="card">
@@ -142,10 +163,14 @@
     <div class="topbar" style="padding:0 0 10px;">
       <button class="iconbtn" onclick="exitSession()">✕</button>
       <div class="exnum" id="ex-counter">Esercizio 1/8</div>
-      <button class="iconbtn" onclick="openTempoModal()">⏱️</button>
+      <div class="row" style="flex:0; gap:8px;">
+        <button class="iconbtn" onclick="openNotes()">ℹ️</button>
+        <button class="iconbtn" onclick="openTempoModal()">⏱️</button>
+      </div>
     </div>
     <div class="progressbar"><div class="progressbar-fill" id="progress-fill"></div></div>
 
+    <div class="section-label" id="ex-section" style="display:none;"></div>
     <div class="ex-title" id="ex-name"></div>
     <div class="badges" id="ex-muscles"></div>
     <div class="equip" id="ex-equip"></div>
@@ -236,6 +261,15 @@
   </div>
 </div>
 
+<!-- NOTES MODAL -->
+<div class="modal-backdrop" id="modal-notes">
+  <div class="modal">
+    <h3 id="notes-title">Note sulla scheda</h3>
+    <ul class="notes-list" id="notes-content"></ul>
+    <button class="btn btn-secondary" style="margin-top:16px;" onclick="closeNotes()">Chiudi</button>
+  </div>
+</div>
+
 <!-- SETTINGS MODAL -->
 <div class="modal-backdrop" id="modal-settings">
   <div class="modal">
@@ -253,43 +287,343 @@
 </div>
 
 <script>
+/* ============ COLORI MUSCOLI ============ */
+const MUSCLE_COLORS = {
+  'Grande Pettorale':'#EF4444', 'Piccolo Pettorale':'#3B82F6', 'Dentato Anteriore':'#10B981',
+  'Pettorali':'#EF4444', 'Schiena':'#3B82F6', 'Bicipiti':'#8B5CF6', 'Tricipiti':'#06B6D4',
+  'Spalle':'#F59E0B', 'Postura/Scapole':'#EC4899', 'Core':'#EAB308', 'Gambe':'#22C55E',
+  'Sterno-cleido-mastoideo':'#EF4444', 'Sottoioidei':'#3B82F6', 'Platisma':'#10B981', 'Erettori Spinali':'#8B5CF6',
+};
+function muscleColor(m){ return MUSCLE_COLORS[m] || '#6B7280'; }
+
 /* ============ DATI SCHEDE ============ */
 const ROUTINES = [
   {
     id: 'pettorali-elastici',
     title: 'Pettorali con Elastici',
     subtitle: 'Grande Pettorale, Piccolo Pettorale, Dentato Anteriore',
+    category: 'Petto',
     duration: '20-30 min',
     frequency: '3x a settimana',
     restSeconds: 75,
     exercises: [
-      { name:'Chest Press con Elastico', muscles:['red','blue','green'], equip:'Elastico con maniglie o senza',
+      { name:'Chest Press con Elastico', muscles:['Grande Pettorale','Piccolo Pettorale','Dentato Anteriore'], equip:'Elastico con maniglie o senza',
         instr:'Fissa l\'elastico dietro la schiena all\'altezza del petto. Spingi le mani in avanti fino a estendere completamente le braccia, poi torna lentamente alla posizione iniziale.',
         sets:4, reps:'12-15' },
-      { name:'Aperture con Elastico (Fly)', muscles:['red','blue','green'], equip:'Elastico con maniglie o senza',
+      { name:'Aperture con Elastico (Fly)', muscles:['Grande Pettorale','Piccolo Pettorale','Dentato Anteriore'], equip:'Elastico con maniglie o senza',
         instr:'Fissa l\'elastico dietro la schiena. Apri le braccia lateralmente con una leggera flessione dei gomiti, poi riporta le mani davanti al petto contraendo i pettorali.',
         sets:4, reps:'12-15' },
-      { name:'Piegamenti con Elastico', muscles:['red','blue','green'], equip:'Elastico lungo e resistente',
+      { name:'Piegamenti con Elastico', muscles:['Grande Pettorale','Piccolo Pettorale','Dentato Anteriore'], equip:'Elastico lungo e resistente',
         instr:'Passa l\'elastico dietro la schiena e sotto le mani. Esegui un piegamento mantenendo il corpo in linea retta. Risali spingendo con forza.',
         sets:4, reps:'8-12' },
-      { name:'Spinte Inclinate con Elastico', muscles:['red','blue','green'], equip:'Elastico con maniglie o senza',
+      { name:'Spinte Inclinate con Elastico', muscles:['Grande Pettorale','Piccolo Pettorale','Dentato Anteriore'], equip:'Elastico con maniglie o senza',
         instr:'Siediti con la schiena appoggiata, elastico sotto i piedi. Spingi le mani in alto e leggermente in avanti, contraendo i pettorali superiori.',
         sets:4, reps:'12-15' },
-      { name:'Croci ai Cavi Bassi con Elastico', muscles:['red','blue','green'], equip:'2 elastici con maniglie',
+      { name:'Croci ai Cavi Bassi con Elastico', muscles:['Grande Pettorale','Piccolo Pettorale','Dentato Anteriore'], equip:'2 elastici con maniglie',
         instr:'Fissa gli elastici in basso ai lati. Porta le braccia aperte e poi incrociale davanti al petto, contraendo i pettorali.',
         sets:4, reps:'12-15' },
-      { name:'Spinte per il Piccolo Pettorale', muscles:['blue','red'], equip:'Elastico con maniglie',
+      { name:'Spinte per il Piccolo Pettorale', muscles:['Piccolo Pettorale','Grande Pettorale'], equip:'Elastico con maniglie',
         instr:'Fissa l\'elastico in alto dietro di te. Spingi le mani in avanti e verso il basso, allungando bene il petto.',
         sets:4, reps:'12-15' },
-      { name:'Push-Up Plus (Serratus)', muscles:['green'], equip:'Elastico (opzionale) o a corpo libero',
+      { name:'Push-Up Plus (Serratus)', muscles:['Dentato Anteriore'], equip:'Elastico (opzionale) o a corpo libero',
         instr:'In posizione di plank, esegui un piegamento. Nella posizione alta, spingi con le mani facendo "allontanare" le scapole tra loro. Ottimo per attivare il dentato anteriore.',
         sets:4, reps:'12-15' },
-      { name:'Punch con Elastico (Serratus)', muscles:['green'], equip:'Elastico con maniglia',
+      { name:'Punch con Elastico (Serratus)', muscles:['Dentato Anteriore'], equip:'Elastico con maniglia',
         instr:'Fissa l\'elastico di lato all\'altezza del petto. Porta il braccio in avanti come un pugno, senza ruotare il busto, focalizzandoti sull\'espansione scapolare.',
         sets:4, reps:'12-15 per lato' },
     ]
-  }
+  },
+  {
+    id: 'upper-body-elastico',
+    title: 'Upper Body con Elastico (Loop Chiuso)',
+    subtitle: 'Petto, Schiena, Spalle, Braccia, Stabilità scapolare',
+    category: 'Upper Body',
+    duration: '35-50 min',
+    frequency: '2-3x a settimana',
+    restSeconds: 45,
+    notes: [
+      'Priorità: Face Pull, Pull Apart, Serratus Punch, Rematore — movimenti lenti e controllati.',
+      'Cautela con: press sopra la testa pesanti, movimenti esplosivi, aperture molto ampie, carichi elevati, esecuzioni veloci, qualsiasi dolore o instabilità.',
+      'Progressione: settimana 1-2 → 3 serie, elastico leggero; settimana 3-4 → 4 serie, più tensione; dopo 4 settimane → rallenta la fase eccentrica.',
+      'Struttura settimanale d\'esempio: Lun Workout A, Mar Tapis roulant/cardio, Mer Workout B, Gio Camminata/cardio leggero, Ven Workout A, Sab Cardio leggero/mobilità, Dom Recupero attivo/stretching.'
+    ],
+    exercises: [
+      { name:'Circonduzioni Spalle', warmup:true, muscles:['Spalle'], equip:'Nessuna attrezzatura',
+        instr:'Esegui ampie circonduzioni delle spalle per attivare l\'articolazione.', sets:1, reps:'20 ripetizioni' },
+      { name:'Aperture Braccia', warmup:true, muscles:['Spalle'], equip:'Nessuna attrezzatura',
+        instr:'Apri e chiudi le braccia lateralmente per mobilizzare le spalle.', sets:1, reps:'20 ripetizioni' },
+      { name:'Scapular Push-Up', warmup:true, muscles:['Dentato Anteriore'], equip:'A corpo libero (posizione plank)',
+        instr:'In plank, spingi il pavimento allontanando le scapole, poi rilassa.', sets:1, reps:'12 ripetizioni' },
+      { name:'Serratus Punch con Elastico', warmup:true, muscles:['Dentato Anteriore'], equip:'Elastico',
+        instr:'Spingi l\'elastico in avanti protraendo le scapole, torna lentamente.', sets:1, reps:'15 ripetizioni' },
+      { name:'Face Pull Leggerissimo', warmup:true, muscles:['Postura/Scapole'], equip:'Elastico',
+        instr:'Tira leggermente l\'elastico verso il viso per attivare la parte posteriore delle spalle.', sets:1, reps:'15 ripetizioni' },
+      { name:'Chest Press con Elastico', section:'Workout A — Petto + Schiena + Braccia', muscles:['Pettorali'], equip:'Elastico dietro la schiena, sotto le ascelle',
+        instr:'Spingi in avanti allungando le braccia, gomiti leggermente piegati. Torna lentamente.', sets:4, reps:'12-15' },
+      { name:'Remautore con Elastico', muscles:['Schiena'], equip:'Piedi sopra l\'elastico',
+        instr:'Busto inclinato in avanti, schiena dritta. Tira verso l\'ombelico stringendo le scapole. Torna lentamente.', sets:4, reps:'12-15' },
+      { name:'Chest Fly (Croci)', muscles:['Pettorali'], equip:'Elastico dietro la schiena',
+        instr:'Apri le braccia e richiudile davanti al petto contraendo i pettorali.', sets:3, reps:'12-15' },
+      { name:'Curl Martello', muscles:['Bicipiti'], equip:'Piedi sopra l\'elastico',
+        instr:'Presa neutra (come martelli). Porta le mani verso le spalle, gomiti vicini al corpo.', sets:3, reps:'12-15' },
+      { name:'Kickback', muscles:['Tricipiti'], equip:'Elastico',
+        instr:'Busto inclinato in avanti, gomito fermo vicino al corpo. Distendi l\'avambraccio indietro contraendo il tricipite. Torna lentamente.', sets:3, reps:'15' },
+      { name:'Face Pull', muscles:['Postura/Scapole'], equip:'Elastico',
+        instr:'Tira l\'elastico verso il viso con i gomiti alti. Stringi le scapole e ruota leggermente le braccia.', sets:3, reps:'15-20' },
+      { name:'Shoulder Press Leggera', section:'Workout B — Spalle + Braccia + Stabilità', muscles:['Spalle'], equip:'Elastico sotto i piedi',
+        instr:'Spingi verso l\'alto mantenendo il core attivo. Esegui solo se non provi fastidio alla clavicola.', sets:3, reps:'10-12' },
+      { name:'Alzate Laterali', muscles:['Spalle'], equip:'Piedi sopra l\'elastico',
+        instr:'Solleva le braccia lateralmente fino all\'altezza delle spalle. Torna lentamente.', sets:3, reps:'12-15' },
+      { name:'Curl Singolo Alternato', muscles:['Bicipiti'], equip:'Un piede sull\'elastico',
+        instr:'Curl con un braccio alla volta, movimento controllato.', sets:3, reps:'12+12' },
+      { name:'Estensioni Tricipiti Sopra Testa', muscles:['Tricipiti'], equip:'Elastico dietro la schiena',
+        instr:'Estendi il braccio verso l\'alto piegando e raddrizzando il gomito.', sets:3, reps:'12-15' },
+      { name:'Pull Apart', muscles:['Postura/Scapole'], equip:'Elastico',
+        instr:'Braccia tese davanti, apri l\'elastico allargando le braccia. Stringi le scapole.', sets:3, reps:'15-20' },
+      { name:'Serratus Punch', muscles:['Dentato Anteriore'], equip:'Elastico',
+        instr:'Spingi l\'elastico in avanti protraendo le scapole. Torna lentamente.', sets:3, reps:'15-20' },
+      { name:'Curl Veloci Controllati', section:'Finisher Brucia Grassi — circuito (20s lavoro / 40s recupero, 3-5 giri)', muscles:['Bicipiti'], equip:'Elastico',
+        instr:'Esegui curl veloci ma controllati per tutta la durata.', sets:1, reps:'20 secondi', rest:40 },
+      { name:'Chest Press (circuito)', muscles:['Pettorali'], equip:'Elastico',
+        instr:'Chest press in modo continuo per tutta la durata.', sets:1, reps:'20 secondi', rest:40 },
+      { name:'Rematore (circuito)', muscles:['Schiena'], equip:'Elastico',
+        instr:'Rematore in modo continuo per tutta la durata.', sets:1, reps:'20 secondi', rest:40 },
+      { name:'Push-Up con Elastico (circuito)', muscles:['Pettorali','Dentato Anteriore'], equip:'Elastico',
+        instr:'Piegamenti con elastico per tutta la durata.', sets:1, reps:'20 secondi', rest:40 },
+      { name:'Riposa (recupero attivo)', muscles:[], equip:'—',
+        instr:'Recupero attivo tra un giro e l\'altro. Ripeti l\'intero circuito 3-5 volte.', sets:1, reps:'40 secondi', rest:0 },
+    ]
+  },
+  {
+    id: 'programma-collo',
+    title: 'Programma Collo',
+    subtitle: 'Tonifica, rinforza e migliora la postura',
+    category: 'Collo',
+    duration: '15-20 min',
+    frequency: '5-6x a settimana (Lun, Mar, Gio, Ven)',
+    restSeconds: 35,
+    suggestedDays: ['Lunedì','Martedì','Giovedì','Venerdì'],
+    notes: [
+      'Non forzare mai i movimenti.',
+      'In caso di dolore cervicale, consulta un professionista.',
+      'Esegui foto ogni 4 settimane per monitorare postura, definizione e mobilità.'
+    ],
+    exercises: [
+      { name:'Bacio al Soffitto', muscles:['Sterno-cleido-mastoideo'], equip:'Nessuna attrezzatura',
+        instr:'Testa dritta, guarda in alto portando le labbra in avanti come per un bacio al soffitto. Mantieni la posizione, senti la contrazione sotto il mento.', sets:3, reps:'10-15' },
+      { name:'Pressione della Lingua', muscles:['Sottoioidei'], equip:'Nessuna attrezzatura',
+        instr:'Premi la lingua con forza contro il palato, mantieni la pressione e abbassa lentamente il mento verso il petto. Ritorna alla posizione iniziale.', sets:3, reps:'10' },
+      { name:'Sollevamento del Collo', muscles:['Sterno-cleido-mastoideo'], equip:'Nessuna attrezzatura (sdraiato)',
+        instr:'Sdraiato con la testa fuori dal bordo del letto o di una panca, solleva lentamente la testa portando il mento verso il petto. Torna giù lentamente. ⚠️ Se hai problemi cervicali, esegui con cautela o evita.', sets:3, reps:'8-12' },
+      { name:'Resistenza con la Mano', muscles:['Erettori Spinali'], equip:'Nessuna attrezzatura',
+        instr:'Posiziona la mano contro la testa (fronte, retro, lato destro, lato sinistro) e spingi la testa contro la mano opponendo resistenza. Ripeti in tutte le direzioni.', sets:3, reps:'8-10 per direzione' },
+      { name:'Stretching del Platisma', muscles:['Platisma'], equip:'Nessuna attrezzatura',
+        instr:'Apri leggermente la bocca, tira gli angoli della bocca verso il basso contraendo i muscoli del collo. Mantieni la posizione.', sets:3, reps:'10' },
+      { name:'Estensione del Collo con Elastico', muscles:['Erettori Spinali'], equip:'Elastico',
+        instr:'Fissa l\'elastico davanti a te all\'altezza della fronte. Porta la testa all\'indietro contrastando la resistenza, poi torna lentamente.', sets:3, reps:'10-12' },
+      { name:'Flessione Laterale con Elastico', muscles:['Sterno-cleido-mastoideo'], equip:'Elastico',
+        instr:'Fissa l\'elastico in alto a un lato. Inclina la testa verso il lato opposto contrastando la resistenza. Ripeti dall\'altro lato.', sets:3, reps:'10-12 per lato' },
+      { name:'Rotazione del Collo con Elastico', muscles:['Sterno-cleido-mastoideo'], equip:'Elastico',
+        instr:'Fissa l\'elastico a lato all\'altezza del viso. Ruota la testa verso l\'altro lato contrastando la resistenza. Ripeti dall\'altro lato.', sets:3, reps:'10-12 per lato' },
+    ]
+  },
+  {
+    id: 'braccia-elastici',
+    title: 'Programma Braccia con Elastici',
+    subtitle: 'Tonifica e snellisce — Addio braccio a bandiera',
+    category: 'Braccia',
+    duration: '20-25 min',
+    frequency: '3x a settimana',
+    restSeconds: 50,
+    notes: [
+      'Riscalda 5 minuti prima di iniziare.',
+      'Scegli una resistenza che ti faccia faticare nelle ultime ripetizioni.',
+      'Respira: espira nello sforzo, inspira nel ritorno.',
+      'Allungamento finale 5 min: bicipiti, tricipiti, spalle, petto — 20-30 sec per lato.'
+    ],
+    exercises: [
+      { name:'Curl Bicipiti', muscles:['Bicipiti'], equip:'Elastico con maniglie',
+        instr:'Piedi al centro dell\'elastico, palmi rivolti in alto. Fletti i gomiti portando le mani verso le spalle, contrai i bicipiti. Torna lentamente.', sets:3, reps:'12-15' },
+      { name:'Estensione Tricipiti Sopra la Testa', muscles:['Tricipiti'], equip:'Elastico con maniglie',
+        instr:'Un piede al centro dell\'elastico. Porta la maniglia sopra la testa con entrambe le mani. Estendi le braccia contraendo i tricipiti. Torna lentamente.', sets:3, reps:'12-15' },
+      { name:'Kickback Tricipiti', muscles:['Tricipiti'], equip:'Elastico con maniglie',
+        instr:'Busto leggermente inclinato in avanti. Gomito vicino al corpo, estendi l\'avambraccio indietro. Torna lentamente.', sets:3, reps:'15' },
+      { name:'Rematore con Elastico', muscles:['Schiena','Bicipiti'], equip:'Elastico con maniglie',
+        instr:'Elastico sotto i piedi. Con la schiena dritta, porta i gomiti indietro stringendo le scapole. Torna lentamente.', sets:3, reps:'12' },
+      { name:'Alzate Laterali', muscles:['Spalle'], equip:'Elastico con maniglie',
+        instr:'Elastico sotto i piedi. Solleva le braccia lateralmente fino all\'altezza delle spalle. Torna lentamente.', sets:3, reps:'12' },
+      { name:'Face Pull con Elastico', muscles:['Spalle','Schiena'], equip:'Elastico e punto di ancoraggio (porta o palo)',
+        instr:'Fissa l\'elastico all\'altezza del viso. Tira verso il viso portando i gomiti larghi e stringendo le scapole. Torna lentamente.', sets:3, reps:'15' },
+      { name:'Pull Apart', muscles:['Spalle','Schiena'], equip:'Elastico',
+        instr:'Impugna l\'elastico alla larghezza delle spalle. Allarga l\'elastico portando le mani all\'esterno. Ritorna lentamente.', sets:3, reps:'15-20' },
+      { name:'Chest Press con Elastico', muscles:['Pettorali','Tricipiti'], equip:'Elastico e punto di ancoraggio',
+        instr:'Fissa l\'elastico dietro la schiena o a un punto basso. Spingi in avanti fino a distendere le braccia. Ritorna lentamente.', sets:3, reps:'12' },
+    ]
+  },
+  {
+    id: 'sala-pesi-domenica',
+    title: 'Sala Pesi (FitActive) — Domenica',
+    subtitle: 'Gambe, Upper Body, Core & Stability',
+    category: 'Palestra',
+    duration: '30-75 min',
+    frequency: '1x a settimana (Domenica)',
+    restSeconds: 60,
+    suggestedDays: ['Domenica'],
+    notes: [
+      'Regole d\'oro: qualità prima del carico; le ultime 2 ripetizioni devono faticare.',
+      'Respira: inspira in discesa, espira in salita/spinta. Mai dolore acuto, solo fatica controllata.',
+      'Dopo l\'allenamento: Tapis Roulant 20-30 min, velocità max 5 km/h, pendenza max 5%, intensità moderata.'
+    ],
+    exercises: [
+      { name:'Serratus Punch', warmup:true, section:'Attivazione (8-10 min)', muscles:['Dentato Anteriore'], equip:'Leggero',
+        instr:'Attiva scapole, cuffia dei rotatori e stabilità della spalla e della clavicola.', sets:3, reps:'15' },
+      { name:'Scapular Push-Up', warmup:true, muscles:['Dentato Anteriore'], equip:'A corpo libero',
+        instr:'Muovi solo le scapole, spingendo il pavimento.', sets:3, reps:'10' },
+      { name:'Rotazioni Esterne', warmup:true, muscles:['Spalle'], equip:'Leggero (manubrio o elastico)',
+        instr:'Attiva la cuffia dei rotatori con rotazioni esterne controllate.', sets:3, reps:'15' },
+      { name:'Band Pull Apart', warmup:true, muscles:['Spalle','Schiena'], equip:'Elastico leggero',
+        instr:'Apri l\'elastico stringendo le scapole.', sets:3, reps:'15' },
+      { name:'Cat-Cow', warmup:true, muscles:['Core'], equip:'A corpo libero (quadrupedia)',
+        instr:'Movimento controllato tra flessione ed estensione della colonna per mobilizzare la schiena.', sets:2, reps:'10' },
+      { name:'Leg Press', section:'Gambe', muscles:['Gambe'], equip:'Macchina Leg Press', load:'70-110 kg',
+        instr:'Piedi a larghezza spalle, spingi con i talloni, non bloccare le ginocchia.', sets:4, reps:'10-12', rest:75 },
+      { name:'Leg Curl', muscles:['Gambe'], equip:'Macchina Leg Curl', load:'25-35 kg',
+        instr:'Rullo sopra i talloni, bacino fermo, movimento senza slanci.', sets:3, reps:'12-15', rest:60 },
+      { name:'Abduttori Macchina', muscles:['Gambe'], equip:'Macchina Abduttori', load:'40-70 kg',
+        instr:'Schiena appoggiata, movimento lento senza slanci.', sets:3, reps:'15-20', rest:60 },
+      { name:'Affondi con Manubri', muscles:['Gambe'], equip:'Manubri', load:'8-14 kg',
+        instr:'Passo lungo, il ginocchio non supera la punta del piede.', sets:3, reps:'10 per gamba', rest:60 },
+      { name:'Calf Raises', muscles:['Gambe'], equip:'Macchina Calf', load:'20-40 kg',
+        instr:'Spingi sui polpacci, movimento completo in alto.', sets:3, reps:'15-20', rest:60 },
+      { name:'Lat Machine Presa Neutra', section:'Upper Body (tecnico e sicuro)', muscles:['Schiena'], equip:'Lat Machine', load:'40-60 kg',
+        instr:'Petto in fuori, tira al petto, gomiti verso il basso.', sets:4, reps:'10-12', rest:75 },
+      { name:'Chest Press Macchina', muscles:['Pettorali'], equip:'Chest Press Macchina', load:'30-50 kg',
+        instr:'Spalle basse e indietro, gomiti a 45°, movimento controllato.', sets:4, reps:'10-12', rest:75 },
+      { name:'Face Pull', muscles:['Postura/Scapole'], equip:'Cavo', load:'10-20 kg',
+        instr:'Tira verso il viso, gomiti alti, stringi le scapole.', sets:3, reps:'12-15', rest:52 },
+      { name:'Curl Manubri', muscles:['Bicipiti'], equip:'Manubri', load:'6-12 kg',
+        instr:'Gomiti fermi, non slanciare il corpo.', sets:3, reps:'10-12', rest:52 },
+      { name:'Alzate Laterali', muscles:['Spalle'], equip:'Manubri', load:'4-8 kg',
+        instr:'Braccia leggermente piegate, movimento lento e controllato.', sets:3, reps:'12-15', rest:52 },
+      { name:'Pushdown Tricipiti', muscles:['Tricipiti'], equip:'Cavo', load:'15-25 kg',
+        instr:'Gomiti vicini al corpo, spingi verso il basso fino a estensione.', sets:3, reps:'12-15', rest:52 },
+      { name:'Plank', section:'Core & Stability', muscles:['Core'], equip:'A corpo libero',
+        instr:'Addome contratto, schiena neutra.', sets:3, reps:'30-45 secondi', rest:45 },
+      { name:'Side Plank', muscles:['Core'], equip:'A corpo libero',
+        instr:'Fianchi in linea, non ruotare il busto.', sets:3, reps:'30 secondi per lato', rest:45 },
+      { name:'Bird Dog', muscles:['Core'], equip:'A corpo libero',
+        instr:'Controllo e stabilità, movimento lento.', sets:3, reps:'10 per lato', rest:45 },
+      { name:'Farmer Carry', muscles:['Core'], equip:'Manubri', load:'8-16 kg',
+        instr:'Schiena dritta, spalle basse, cammina stabile.', sets:3, reps:'30-40 metri', rest:60 },
+    ]
+  },
+  {
+    id: 'accessori-spalla',
+    title: 'Accessori Spalla (Tecnica Post-Corso)',
+    subtitle: 'Serratus Punch, Rotazioni Esterne, Face Pull, Farmer Carry, Scapular Push-Up',
+    category: 'Riabilitazione',
+    duration: '10-15 min',
+    frequency: 'Dopo i corsi in palestra (Lun/Mar/Gio/Ven)',
+    restSeconds: 45,
+    suggestedDays: ['Lunedì','Martedì','Giovedì','Venerdì'],
+    notes: [
+      'Da fare dopo i corsi HIIT/GAG in palestra, per la stabilità scapolare legata alla lassità sterno-clavicolare.',
+      'Se un giorno hai poco tempo, dai priorità a Serratus Punch, Rotazioni Esterne e Face Pull.'
+    ],
+    exercises: [
+      { name:'Serratus Punch', muscles:['Dentato Anteriore'], equip:'Manubrio leggero o elastico', load:'4-8 kg',
+        instr:'Spingi le scapole in avanti, protraendole. Movimento piccolo e controllato.', sets:3, reps:'10' },
+      { name:'Rotazioni Esterne', muscles:['Spalle'], equip:'Elastico o manubrio leggero', load:'2,5-5 kg',
+        instr:'Gomito a 90°, ruota l\'avambraccio verso l\'esterno mantenendo la scapola stabile.', sets:3, reps:'10' },
+      { name:'Face Pull', muscles:['Postura/Scapole'], equip:'Cavo o elastico', load:'10-20 kg',
+        instr:'Tira verso il viso, gomiti alti, scapole indietro e verso il basso.', sets:3, reps:'10' },
+      { name:'Farmer Carry', muscles:['Core'], equip:'Manubri', load:'12-20 kg',
+        instr:'Cammina mantenendo scapole attive e spalle stabili.', sets:3, reps:'20 metri' },
+      { name:'Scapular Push-Up', muscles:['Dentato Anteriore'], equip:'A corpo libero',
+        instr:'In plank o in appoggio al muro/ginocchia, muovi solo le scapole allontanandole tra loro.', sets:3, reps:'10' },
+    ]
+  },
+  {
+    id: 'lassita-lunedi',
+    title: 'Recupero Lassità Sterno-Clavicolare — Lunedì',
+    subtitle: 'Stabilità scapolare, corpo libero + macchine leggere',
+    category: 'Riabilitazione',
+    duration: '15-20 min',
+    frequency: 'Lunedì',
+    restSeconds: 45,
+    suggestedDays: ['Lunedì'],
+    notes: [
+      'Fermati se: incertezza articolare o dolore acuto vicino allo sterno.',
+      'Zero movimenti esplosivi. Mai dolore durante gli esercizi. No upper body pesante all\'inizio.'
+    ],
+    exercises: [
+      { name:'Retrazione Scapolare (Isometria)', muscles:['Postura/Scapole'], equip:'Nessuna attrezzatura (seduto)',
+        instr:'Seduto, attiva le scapole portandole in basso e al centro. Tieni la contrazione 5 secondi.', sets:3, reps:'10 (tenuta 5 sec)' },
+      { name:'Rotazioni Esterne con Elastico/Cavo', muscles:['Spalle'], equip:'Elastico all\'avambraccio o cavo basso con maniglia',
+        instr:'Gomito a 90° e a fianco, ruota l\'avambraccio verso l\'esterno mantenendo la scapola stabile. (Numero ripetizioni non specificato sulla scheda originale: stima 10-12.)', sets:3, reps:'10-12' },
+      { name:'Wall Slide', muscles:['Postura/Scapole'], equip:'Nessuna attrezzatura (schiena al muro)',
+        instr:'Schiena al muro, gomiti a 90°, scivola verso l\'alto mantenendo il contatto polsi-gomiti-schiena.', sets:3, reps:'8' },
+      { name:'Curl Manubri', muscles:['Bicipiti'], equip:'Manubri leggeri',
+        instr:'Focalizzati sulla tecnica, tieni le scapole attive.', sets:3, reps:'10-12' },
+      { name:'Abduttori Macchina', muscles:['Gambe'], equip:'Macchina Abduttori',
+        instr:'Movimento lento e controllato.', sets:3, reps:'15-20' },
+    ]
+  },
+  {
+    id: 'lassita-giovedi',
+    title: 'Recupero Lassità Sterno-Clavicolare — Giovedì',
+    subtitle: 'Stabilità scapolare',
+    category: 'Riabilitazione',
+    duration: '10-15 min',
+    frequency: 'Giovedì',
+    restSeconds: 45,
+    suggestedDays: ['Giovedì'],
+    notes: [
+      'Fermati se: incertezza articolare o dolore acuto vicino allo sterno.',
+      'Zero movimenti esplosivi. Mai dolore durante gli esercizi.'
+    ],
+    exercises: [
+      { name:'Serratus Punch (con manubrio)', muscles:['Dentato Anteriore'], equip:'Manubrio leggero (sdraiato)',
+        instr:'Sdraiato, spingi il braccio verso l\'alto senza piegare il gomito.', sets:3, reps:'12' },
+      { name:'Face Pull', muscles:['Postura/Scapole'], equip:'Cavo o elastico',
+        instr:'Tira verso il viso tenendo le scapole attive.', sets:3, reps:'12-15' },
+      { name:'Scapular Push-Up (facilitato)', muscles:['Dentato Anteriore'], equip:'A corpo libero (muro o ginocchia)',
+        instr:'In appoggio al muro o sulle ginocchia, muovi solo le scapole.', sets:3, reps:'10' },
+    ]
+  },
+  {
+    id: 'lassita-venerdi',
+    title: 'Recupero Lassità Sterno-Clavicolare — Venerdì (extra)',
+    subtitle: 'Esercizi extra facoltativi',
+    category: 'Riabilitazione',
+    duration: '8-10 min',
+    frequency: 'Venerdì (facoltativo)',
+    restSeconds: 45,
+    suggestedDays: ['Venerdì'],
+    notes: ['Esercizi extra da fare quando hai tempo o energia in più.'],
+    exercises: [
+      { name:'Farmer\'s Carry', muscles:['Core'], equip:'Manubri leggeri',
+        instr:'Cammina mantenendo le scapole attive e le spalle stabili.', sets:3, reps:'30 secondi' },
+      { name:'Face Pull', muscles:['Postura/Scapole'], equip:'Cavo o elastico',
+        instr:'Tira verso il viso tenendo le scapole attive.', sets:3, reps:'12' },
+    ]
+  },
 ];
+
+/* ============ PIANO SETTIMANALE ============ */
+const WEEKLY_PLAN = [
+  { day:'Lunedì', classLabel:'HIIT (FitActive)', extra:'Tecnica/Pesi + Cardio', routineId:'accessori-spalla', cardio:'Tapis Roulant 10-30 min' },
+  { day:'Martedì', classLabel:'GAG (FitActive)', extra:'HIIT + Post-corso · priorità Farmer Carry/Scapular Push-Up', routineId:'accessori-spalla', cardio:'Tapis Roulant 10-30 min' },
+  { day:'Mercoledì', classLabel:'Tabata — Legs & Butt (FitActive)', extra:'Gambe/Upper Body come riferimento dalla scheda Sala Pesi', routineId:'sala-pesi-domenica', cardio:null },
+  { day:'Giovedì', classLabel:'GAG — Upper Body (FitActive)', extra:'Tecnica + GAG + HIIT', routineId:'accessori-spalla', cardio:'Tapis Roulant 10-30 min' },
+  { day:'Venerdì', classLabel:'HIIT (FitActive)', extra:'Rifinitura + Cardio', routineId:'sala-pesi-domenica', cardio:null },
+  { day:'Sabato', classLabel:'MTB 12-20 km', extra:'Uscita in bici o attività outdoor', routineId:null, cardio:null },
+  { day:'Domenica', classLabel:'Sala Pesi (30-75 min)', extra:'Gambe + Upper Body + Core & Stability', routineId:'sala-pesi-domenica', cardio:'Tapis Roulant dopo, 20-30 min' },
+];
+function todayPlan(){
+  const idx = (new Date().getDay() + 6) % 7; // 0=Lunedì
+  return WEEKLY_PLAN[idx];
+}
 
 /* ============ STATO ============ */
 let settings = JSON.parse(localStorage.getItem('ac_settings') || '{"sound":true,"restDefault":75}');
@@ -330,16 +664,39 @@ function releaseWakeLock(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wake
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible' && session) requestWakeLock(); });
 
 /* ============ RENDER HOME ============ */
+let activeCategory = 'Tutte';
+function renderTodayCard(){
+  const plan = todayPlan();
+  const card = document.getElementById('today-card');
+  const routine = ROUTINES.find(r => r.id === plan.routineId);
+  card.innerHTML = `
+    <div class="today-label">Oggi — ${plan.day}</div>
+    <div class="today-class">${plan.classLabel}</div>
+    <div class="today-sub">${plan.extra || ''}${plan.cardio ? ' · 🏃 ' + plan.cardio : ''}</div>
+    ${routine ? `<button class="btn btn-primary" onclick="startRoutineById('${routine.id}')">Inizia: ${routine.title}</button>` : ''}
+  `;
+}
+function renderCategoryChips(){
+  const cats = ['Tutte', ...new Set(ROUTINES.map(r => r.category))];
+  const wrap = document.getElementById('category-chips');
+  wrap.innerHTML = cats.map(c => `<div class="chip${c===activeCategory?' active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
+}
+function setCategory(c){ activeCategory = c; renderHome(); }
 function renderHome(){
+  renderTodayCard();
+  renderCategoryChips();
   const list = document.getElementById('routine-list');
   list.innerHTML = '';
-  ROUTINES.forEach((r, idx) => {
+  const filtered = activeCategory === 'Tutte' ? ROUTINES : ROUTINES.filter(r => r.category === activeCategory);
+  filtered.forEach((r) => {
+    const idx = ROUTINES.indexOf(r);
+    const firstMuscles = (r.exercises.find(e => e.muscles && e.muscles.length) || {muscles:[]}).muscles;
     const div = document.createElement('div');
     div.className = 'card routine-card';
     div.onclick = () => startRoutine(idx);
     div.innerHTML = `
       <div class="name">${r.title}</div>
-      <div class="badges">${r.exercises[0].muscles.map(m=>`<span class="dot ${m}"></span>`).join('')}<span style="color:var(--text-dim); font-size:12px; margin-left:4px;">${r.subtitle}</span></div>
+      <div class="badges">${firstMuscles.map(m=>`<span class="dot" style="background:${muscleColor(m)}"></span>`).join('')}<span style="color:var(--text-dim); font-size:12px; margin-left:4px;">${r.subtitle || ''}</span></div>
       <div class="meta"><span>⏱ ${r.duration}</span><span>📅 ${r.frequency}</span><span>🏋️ ${r.exercises.length} esercizi</span></div>
     `;
     list.appendChild(div);
@@ -360,23 +717,29 @@ function startRoutine(idx){
   requestWakeLock();
   renderExercise();
 }
+function startRoutineById(id){
+  const idx = ROUTINES.findIndex(r => r.id === id);
+  if(idx >= 0) startRoutine(idx);
+}
 function currentExercise(){ return session.routine.exercises[session.exIndex]; }
 
 function renderExercise(){
   const r = session.routine, ex = currentExercise();
   document.getElementById('ex-counter').textContent = `Esercizio ${session.exIndex+1}/${r.exercises.length}`;
   document.getElementById('progress-fill').style.width = ((session.exIndex)/r.exercises.length*100) + '%';
+  const sectionEl = document.getElementById('ex-section');
+  if(ex.section){ sectionEl.textContent = ex.section; sectionEl.style.display = 'block'; }
+  else { sectionEl.style.display = 'none'; }
   document.getElementById('ex-name').textContent = ex.name;
-  document.getElementById('ex-muscles').innerHTML = ex.muscles.map(m=>`<span class="dot ${m}"></span>`).join('') + `<span style="color:var(--text-dim); font-size:12px; margin-left:4px;">${muscleNames(ex.muscles)}</span>`;
-  document.getElementById('ex-equip').textContent = '🔧 ' + ex.equip;
+  const muscleBadges = (ex.muscles||[]).map(m=>`<span class="dot" style="background:${muscleColor(m)}"></span>`).join('');
+  const warmupBadge = ex.warmup ? `<span class="warmup-badge">Riscaldamento</span>` : '';
+  document.getElementById('ex-muscles').innerHTML = muscleBadges + `<span style="color:var(--text-dim); font-size:12px; margin-left:4px;">${(ex.muscles||[]).join(' · ')}</span>` + warmupBadge;
+  const loadBadge = ex.load ? `<span class="load-badge">⚖️ ${ex.load}</span>` : '';
+  document.getElementById('ex-equip').innerHTML = '🔧 ' + ex.equip + loadBadge;
   document.getElementById('ex-reps').textContent = ex.reps;
   document.getElementById('ex-instructions').textContent = ex.instr;
   renderSetDots(ex);
   document.getElementById('btn-complete-set').textContent = session.setIndex >= ex.sets ? 'Esercizio completato' : 'Serie completata';
-}
-function muscleNames(arr){
-  const n = {red:'Grande Pett.', blue:'Piccolo Pett.', green:'Dentato Ant.'};
-  return arr.map(a=>n[a]).join(' · ');
 }
 function renderSetDots(ex){
   const wrap = document.getElementById('sets-dots');
@@ -398,7 +761,8 @@ function completeSet(){
     document.getElementById('btn-complete-set').textContent = 'Esercizio completato';
     return;
   }
-  startRest(session.routine.restSeconds || settings.restDefault);
+  const restTime = (ex.rest !== undefined) ? ex.rest : (session.routine.restSeconds || settings.restDefault);
+  if(restTime > 0) startRest(restTime);
 }
 function goToNextExerciseOrFinish(){
   if(session.exIndex + 1 >= session.routine.exercises.length){ finishRoutine(); }
@@ -552,6 +916,16 @@ function stopTempo(){
   tempoState = null;
   document.getElementById('overlay-tempo').classList.remove('active');
 }
+
+/* ============ NOTE SCHEDA ============ */
+function openNotes(){
+  if(!session) return;
+  const notes = session.routine.notes || ['Nessuna nota per questa scheda.'];
+  document.getElementById('notes-title').textContent = 'Note — ' + session.routine.title;
+  document.getElementById('notes-content').innerHTML = notes.map(n => `<li>${n}</li>`).join('');
+  document.getElementById('modal-notes').classList.add('active');
+}
+function closeNotes(){ document.getElementById('modal-notes').classList.remove('active'); }
 
 /* ============ SETTINGS ============ */
 function openSettings(){
