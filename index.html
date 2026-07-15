@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Muvapp</title>
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Muvapp">
+<meta name="theme-color" content="#0F1115">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0F1115;
+    --bg-card:#181B22;
+    --bg-card2:#1F232C;
+    --border:#2A2F3A;
+    --text:#F4F5F7;
+    --text-dim:#9AA1AC;
+    --accent:#F97316;
+    --accent-dim:#7C3A0E;
+    --red:#EF4444;
+    --blue:#3B82F6;
+    --green:#10B981;
+    --good:#22C55E;
+    --warn:#EAB308;
+    --danger:#EF4444;
+    --radius:18px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    overscroll-behavior:none; user-select:none;
+    padding-top:env(safe-area-inset-top); padding-bottom:env(safe-area-inset-bottom);
+  }
+  #app{max-width:520px; margin:0 auto; min-height:100vh; display:flex; flex-direction:column;}
+  .view{display:none; flex:1; flex-direction:column; padding:20px 18px 100px;}
+  .view.active{display:flex;}
+  h1{font-size:26px; font-weight:800; margin:6px 0 2px;}
+  h2{font-size:20px; font-weight:700; margin:0 0 8px;}
+  .sub{color:var(--text-dim); font-size:14px; margin:0 0 18px;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; padding:14px 18px 0;}
+  .iconbtn{background:var(--bg-card); border:1px solid var(--border); color:var(--text); width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px;}
+  .card{background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px;}
+  .routine-card{display:flex; flex-direction:column; gap:8px; cursor:pointer;}
+  .routine-card .name{font-size:18px; font-weight:700;}
+  .badges{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
+  .dot{width:10px; height:10px; border-radius:50%; display:inline-block;}
+  .dot.red{background:var(--red);} .dot.blue{background:var(--blue);} .dot.green{background:var(--green);}
+  .meta{display:flex; gap:14px; color:var(--text-dim); font-size:13px; margin-top:6px;}
+  .btn{border:none; border-radius:14px; padding:16px; font-size:16px; font-weight:700; width:100%; display:flex; align-items:center; justify-content:center; gap:8px;}
+  .btn-primary{background:var(--accent); color:#1a0e02;}
+  .btn-secondary{background:var(--bg-card2); color:var(--text); border:1px solid var(--border);}
+  .btn-ghost{background:transparent; color:var(--text-dim); border:1px solid var(--border);}
+  .btn:active{transform:scale(0.97);}
+  .row{display:flex; gap:10px;}
+  .row > *{flex:1;}
+  .footer-stats{color:var(--text-dim); font-size:13px; text-align:center; margin-top:auto; padding-top:20px;}
+  /* SESSION VIEW */
+  .progressbar{height:6px; background:var(--bg-card2); border-radius:4px; overflow:hidden; margin-bottom:16px;}
+  .progressbar-fill{height:100%; background:var(--accent); border-radius:4px; transition:width .3s;}
+  .ex-title{font-size:24px; font-weight:800; margin:4px 0 6px;}
+  .equip{color:var(--text-dim); font-size:13px; margin-bottom:14px;}
+  .instructions{background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; font-size:15px; line-height:1.5; margin-bottom:16px;}
+  .reps-box{display:flex; align-items:baseline; gap:8px; margin-bottom:16px;}
+  .reps-box .num{font-size:34px; font-weight:800; color:var(--accent);}
+  .reps-box .label{color:var(--text-dim); font-size:14px;}
+  .sets-dots{display:flex; gap:10px; margin-bottom:20px;}
+  .setdot{width:34px; height:34px; border-radius:50%; border:2px solid var(--border); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--text-dim);}
+  .setdot.done{background:var(--good); border-color:var(--good); color:#062b12;}
+  .setdot.current{border-color:var(--accent); color:var(--accent);}
+  .nav-row{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:16px; gap:10px;}
+  .nav-row .iconbtn{flex-shrink:0;}
+  .exnum{color:var(--text-dim); font-size:13px; text-align:center;}
+  /* OVERLAYS */
+  .overlay{position:fixed; inset:0; background:var(--bg); display:none; flex-direction:column; align-items:center; justify-content:center; padding:24px; z-index:50;}
+  .overlay.active{display:flex;}
+  .ring-wrap{position:relative; width:260px; height:260px; margin-bottom:24px;}
+  .ring-wrap svg{transform:rotate(-90deg);}
+  .ring-bg{fill:none; stroke:var(--bg-card2); stroke-width:14;}
+  .ring-fg{fill:none; stroke:var(--accent); stroke-width:14; stroke-linecap:round; transition:stroke-dashoffset .25s linear;}
+  .ring-center{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+  .ring-time{font-size:52px; font-weight:800; font-variant-numeric:tabular-nums;}
+  .ring-label{color:var(--text-dim); font-size:14px; margin-top:4px; text-transform:uppercase; letter-spacing:1px;}
+  .phase-label{font-size:22px; font-weight:800; color:var(--accent); margin-bottom:6px; text-transform:uppercase; letter-spacing:1px;}
+  .overlay-title{color:var(--text-dim); font-size:14px; margin-bottom:6px;}
+  .overlay-actions{display:flex; gap:12px; margin-top:28px; width:100%; max-width:320px;}
+  /* MODAL */
+  .modal-backdrop{position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:flex-end; justify-content:center; z-index:60;}
+  .modal-backdrop.active{display:flex;}
+  .modal{background:var(--bg-card); width:100%; max-width:520px; border-radius:22px 22px 0 0; padding:20px 18px calc(24px + env(safe-area-inset-bottom));}
+  .modal h3{margin:0 0 14px;}
+  .field{display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border);}
+  .field:last-of-type{border-bottom:none;}
+  .field label{font-size:15px;}
+  .field .field-sub{color:var(--text-dim); font-size:12px;}
+  .stepper{display:flex; align-items:center; gap:12px;}
+  .stepper button{width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--bg-card2); color:var(--text); font-size:18px;}
+  .stepper .val{min-width:36px; text-align:center; font-weight:700;}
+  .switch{width:46px; height:28px; border-radius:14px; background:var(--bg-card2); border:1px solid var(--border); position:relative;}
+  .switch.on{background:var(--accent);}
+  .switch .knob{position:absolute; top:2px; left:2px; width:22px; height:22px; border-radius:50%; background:#fff; transition:left .2s;}
+  .switch.on .knob{left:20px;}
+  .tips{list-style:none; padding:0; margin:0; font-size:14px; line-height:1.9; color:var(--text-dim);}
+  .tips li:before{content:"✓ "; color:var(--good); font-weight:700;}
+  .complete-emoji{font-size:56px; margin-bottom:12px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME VIEW -->
+  <div class="view active" id="view-home">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+      <div>
+        <h1>Muvapp</h1>
+        <p class="sub">Le tue schede, guidate passo passo</p>
+      </div>
+      <button class="iconbtn" onclick="openSettings()">⚙️</button>
+    </div>
+
+    <div id="routine-list"></div>
+
+    <div class="card">
+      <h2 style="font-size:16px; margin-bottom:10px;">Consigli importanti</h2>
+      <ul class="tips">
+        <li>Mantieni sempre il core attivo e la schiena dritta</li>
+        <li>Esegui il movimento in modo lento e controllato</li>
+        <li>Respira: inspira in apertura, espira nello sforzo</li>
+        <li>Aumenta la resistenza quando completi facilmente le ripetizioni</li>
+      </ul>
+    </div>
+
+    <div class="footer-stats" id="home-stats"></div>
+  </div>
+
+  <!-- SESSION VIEW -->
+  <div class="view" id="view-session">
+    <div class="topbar" style="padding:0 0 10px;">
+      <button class="iconbtn" onclick="exitSession()">✕</button>
+      <div class="exnum" id="ex-counter">Esercizio 1/8</div>
+      <button class="iconbtn" onclick="openTempoModal()">⏱️</button>
+    </div>
+    <div class="progressbar"><div class="progressbar-fill" id="progress-fill"></div></div>
+
+    <div class="ex-title" id="ex-name"></div>
+    <div class="badges" id="ex-muscles"></div>
+    <div class="equip" id="ex-equip"></div>
+
+    <div class="reps-box">
+      <div class="num" id="ex-reps"></div>
+      <div class="label">ripetizioni per serie</div>
+    </div>
+
+    <div class="sets-dots" id="sets-dots"></div>
+
+    <div class="instructions" id="ex-instructions"></div>
+
+    <button class="btn btn-primary" id="btn-complete-set" onclick="completeSet()">Serie completata</button>
+
+    <div class="nav-row">
+      <button class="iconbtn" onclick="prevExercise()">←</button>
+      <button class="btn btn-ghost" style="width:auto; padding:12px 18px;" onclick="skipExercise()">Salta esercizio</button>
+      <button class="iconbtn" onclick="nextExercise()">→</button>
+    </div>
+  </div>
+
+  <!-- COMPLETE VIEW -->
+  <div class="view" id="view-complete" style="align-items:center; justify-content:center; text-align:center;">
+    <div class="complete-emoji">💪</div>
+    <h1>Allenamento completato!</h1>
+    <p class="sub" id="complete-summary"></p>
+    <button class="btn btn-primary" style="max-width:280px;" onclick="goHome()">Torna alla home</button>
+  </div>
+
+</div>
+
+<!-- REST OVERLAY -->
+<div class="overlay" id="overlay-rest">
+  <div class="overlay-title" id="rest-title">Recupero</div>
+  <div class="ring-wrap">
+    <svg width="260" height="260" viewBox="0 0 260 260">
+      <circle class="ring-bg" cx="130" cy="130" r="115"></circle>
+      <circle class="ring-fg" id="rest-ring" cx="130" cy="130" r="115"></circle>
+    </svg>
+    <div class="ring-center">
+      <div class="ring-time" id="rest-time">60</div>
+      <div class="ring-label">secondi</div>
+    </div>
+  </div>
+  <div class="overlay-actions">
+    <button class="btn btn-secondary" onclick="adjustRest(-15)">-15s</button>
+    <button class="btn btn-secondary" onclick="adjustRest(15)">+15s</button>
+  </div>
+  <div class="overlay-actions">
+    <button class="btn btn-primary" onclick="skipRest()">Salta recupero</button>
+  </div>
+</div>
+
+<!-- TEMPO OVERLAY -->
+<div class="overlay" id="overlay-tempo">
+  <div class="overlay-title" id="tempo-rep-count">Ripetizione 1/10</div>
+  <div class="phase-label" id="tempo-phase-label">SPINTA</div>
+  <div class="ring-wrap">
+    <svg width="260" height="260" viewBox="0 0 260 260">
+      <circle class="ring-bg" cx="130" cy="130" r="115"></circle>
+      <circle class="ring-fg" id="tempo-ring" cx="130" cy="130" r="115"></circle>
+    </svg>
+    <div class="ring-center">
+      <div class="ring-time" id="tempo-time">2</div>
+    </div>
+  </div>
+  <div class="overlay-actions">
+    <button class="btn btn-secondary" onclick="pauseTempo()" id="tempo-pause-btn">Pausa</button>
+    <button class="btn btn-primary" onclick="stopTempo()">Termina</button>
+  </div>
+</div>
+
+<!-- TEMPO CONFIG MODAL -->
+<div class="modal-backdrop" id="modal-tempo-config">
+  <div class="modal">
+    <h3>Timer a tempo</h3>
+    <p class="sub" style="margin-bottom:10px;">Imposta la durata di ogni fase della ripetizione (in secondi). Usa 0 per saltare una fase.</p>
+    <div class="field"><label>Fase 1 — Spinta/Sforzo<div class="field-sub">fase concentrica</div></label><div class="stepper"><button onclick="stepTempo('p1',-1)">−</button><span class="val" id="val-p1">2</span><button onclick="stepTempo('p1',1)">+</button></div></div>
+    <div class="field"><label>Fase 2 — Pausa in tensione<div class="field-sub">picco di contrazione</div></label><div class="stepper"><button onclick="stepTempo('p2',-1)">−</button><span class="val" id="val-p2">1</span><button onclick="stepTempo('p2',1)">+</button></div></div>
+    <div class="field"><label>Fase 3 — Ritorno<div class="field-sub">fase eccentrica</div></label><div class="stepper"><button onclick="stepTempo('p3',-1)">−</button><span class="val" id="val-p3">2</span><button onclick="stepTempo('p3',1)">+</button></div></div>
+    <div class="field"><label>Fase 4 — Pausa finale<div class="field-sub">tra una ripetizione e l'altra</div></label><div class="stepper"><button onclick="stepTempo('p4',-1)">−</button><span class="val" id="val-p4">0</span><button onclick="stepTempo('p4',1)">+</button></div></div>
+    <div class="field"><label>Ripetizioni</label><div class="stepper"><button onclick="stepTempo('reps',-1)">−</button><span class="val" id="val-reps">10</span><button onclick="stepTempo('reps',1)">+</button></div></div>
+    <div class="row" style="margin-top:16px;">
+      <button class="btn btn-ghost" onclick="closeTempoModal()">Annulla</button>
+      <button class="btn btn-primary" onclick="startTempoFromModal()">Avvia</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-backdrop" id="modal-settings">
+  <div class="modal">
+    <h3>Impostazioni</h3>
+    <div class="field">
+      <label>Suoni<div class="field-sub">Segnali acustici durante i timer</div></label>
+      <div class="switch" id="switch-sound" onclick="toggleSetting('sound')"><div class="knob"></div></div>
+    </div>
+    <div class="field">
+      <label>Recupero predefinito<div class="field-sub">Tra una serie e l'altra</div></label>
+      <div class="stepper"><button onclick="stepSetting('restDefault',-15)">−</button><span class="val" id="val-restDefault">75</span><button onclick="stepSetting('restDefault',15)">+</button></div>
+    </div>
+    <button class="btn btn-secondary" style="margin-top:16px;" onclick="closeSettings()">Chiudi</button>
+  </div>
+</div>
+
+<script>
+/* ============ DATI SCHEDE ============ */
+const ROUTINES = [
+  {
+    id: 'pettorali-elastici',
+    title: 'Pettorali con Elastici',
+    subtitle: 'Grande Pettorale, Piccolo Pettorale, Dentato Anteriore',
+    duration: '20-30 min',
+    frequency: '3x a settimana',
+    restSeconds: 75,
+    exercises: [
+      { name:'Chest Press con Elastico', muscles:['red','blue','green'], equip:'Elastico con maniglie o senza',
+        instr:'Fissa l\'elastico dietro la schiena all\'altezza del petto. Spingi le mani in avanti fino a estendere completamente le braccia, poi torna lentamente alla posizione iniziale.',
+        sets:4, reps:'12-15' },
+      { name:'Aperture con Elastico (Fly)', muscles:['red','blue','green'], equip:'Elastico con maniglie o senza',
+        instr:'Fissa l\'elastico dietro la schiena. Apri le braccia lateralmente con una leggera flessione dei gomiti, poi riporta le mani davanti al petto contraendo i pettorali.',
+        sets:4, reps:'12-15' },
+      { name:'Piegamenti con Elastico', muscles:['red','blue','green'], equip:'Elastico lungo e resistente',
+        instr:'Passa l\'elastico dietro la schiena e sotto le mani. Esegui un piegamento mantenendo il corpo in linea retta. Risali spingendo con forza.',
+        sets:4, reps:'8-12' },
+      { name:'Spinte Inclinate con Elastico', muscles:['red','blue','green'], equip:'Elastico con maniglie o senza',
+        instr:'Siediti con la schiena appoggiata, elastico sotto i piedi. Spingi le mani in alto e leggermente in avanti, contraendo i pettorali superiori.',
+        sets:4, reps:'12-15' },
+      { name:'Croci ai Cavi Bassi con Elastico', muscles:['red','blue','green'], equip:'2 elastici con maniglie',
+        instr:'Fissa gli elastici in basso ai lati. Porta le braccia aperte e poi incrociale davanti al petto, contraendo i pettorali.',
+        sets:4, reps:'12-15' },
+      { name:'Spinte per il Piccolo Pettorale', muscles:['blue','red'], equip:'Elastico con maniglie',
+        instr:'Fissa l\'elastico in alto dietro di te. Spingi le mani in avanti e verso il basso, allungando bene il petto.',
+        sets:4, reps:'12-15' },
+      { name:'Push-Up Plus (Serratus)', muscles:['green'], equip:'Elastico (opzionale) o a corpo libero',
+        instr:'In posizione di plank, esegui un piegamento. Nella posizione alta, spingi con le mani facendo "allontanare" le scapole tra loro. Ottimo per attivare il dentato anteriore.',
+        sets:4, reps:'12-15' },
+      { name:'Punch con Elastico (Serratus)', muscles:['green'], equip:'Elastico con maniglia',
+        instr:'Fissa l\'elastico di lato all\'altezza del petto. Porta il braccio in avanti come un pugno, senza ruotare il busto, focalizzandoti sull\'espansione scapolare.',
+        sets:4, reps:'12-15 per lato' },
+    ]
+  }
+];
+
+/* ============ STATO ============ */
+let settings = JSON.parse(localStorage.getItem('ac_settings') || '{"sound":true,"restDefault":75}');
+let history = JSON.parse(localStorage.getItem('ac_history') || '[]');
+let session = null; // {routine, exIndex, setIndex}
+let wakeLock = null;
+let audioCtx = null;
+let restState = null, restTimerId = null;
+let tempoState = null, tempoTimerId = null, tempoConfig = {p1:2,p2:1,p3:2,p4:0,reps:10};
+
+const RING_CIRC = 2 * Math.PI * 115;
+
+/* ============ AUDIO ============ */
+function ensureAudio(){
+  if(!audioCtx){ audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+}
+function beep(freq=880, dur=0.12){
+  if(!settings.sound) return;
+  try{
+    ensureAudio();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.18, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  }catch(e){}
+}
+function buzz(ms){ if(navigator.vibrate) navigator.vibrate(ms); }
+
+/* ============ WAKE LOCK ============ */
+async function requestWakeLock(){
+  try{ if('wakeLock' in navigator){ wakeLock = await navigator.wakeLock.request('screen'); } }catch(e){}
+}
+function releaseWakeLock(){ if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock = null; } }
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState === 'visible' && session) requestWakeLock(); });
+
+/* ============ RENDER HOME ============ */
+function renderHome(){
+  const list = document.getElementById('routine-list');
+  list.innerHTML = '';
+  ROUTINES.forEach((r, idx) => {
+    const div = document.createElement('div');
+    div.className = 'card routine-card';
+    div.onclick = () => startRoutine(idx);
+    div.innerHTML = `
+      <div class="name">${r.title}</div>
+      <div class="badges">${r.exercises[0].muscles.map(m=>`<span class="dot ${m}"></span>`).join('')}<span style="color:var(--text-dim); font-size:12px; margin-left:4px;">${r.subtitle}</span></div>
+      <div class="meta"><span>⏱ ${r.duration}</span><span>📅 ${r.frequency}</span><span>🏋️ ${r.exercises.length} esercizi</span></div>
+    `;
+    list.appendChild(div);
+  });
+  const stats = document.getElementById('home-stats');
+  if(history.length === 0){
+    stats.textContent = 'Nessuna sessione ancora completata';
+  } else {
+    const last = new Date(history[history.length-1]);
+    stats.textContent = `${history.length} sessioni completate · ultima il ${last.toLocaleDateString('it-IT')}`;
+  }
+}
+
+/* ============ SESSIONE ============ */
+function startRoutine(idx){
+  session = { routine: ROUTINES[idx], exIndex: 0, setIndex: 0 };
+  showView('view-session');
+  requestWakeLock();
+  renderExercise();
+}
+function currentExercise(){ return session.routine.exercises[session.exIndex]; }
+
+function renderExercise(){
+  const r = session.routine, ex = currentExercise();
+  document.getElementById('ex-counter').textContent = `Esercizio ${session.exIndex+1}/${r.exercises.length}`;
+  document.getElementById('progress-fill').style.width = ((session.exIndex)/r.exercises.length*100) + '%';
+  document.getElementById('ex-name').textContent = ex.name;
+  document.getElementById('ex-muscles').innerHTML = ex.muscles.map(m=>`<span class="dot ${m}"></span>`).join('') + `<span style="color:var(--text-dim); font-size:12px; margin-left:4px;">${muscleNames(ex.muscles)}</span>`;
+  document.getElementById('ex-equip').textContent = '🔧 ' + ex.equip;
+  document.getElementById('ex-reps').textContent = ex.reps;
+  document.getElementById('ex-instructions').textContent = ex.instr;
+  renderSetDots(ex);
+  document.getElementById('btn-complete-set').textContent = session.setIndex >= ex.sets ? 'Esercizio completato' : 'Serie completata';
+}
+function muscleNames(arr){
+  const n = {red:'Grande Pett.', blue:'Piccolo Pett.', green:'Dentato Ant.'};
+  return arr.map(a=>n[a]).join(' · ');
+}
+function renderSetDots(ex){
+  const wrap = document.getElementById('sets-dots');
+  wrap.innerHTML = '';
+  for(let i=0;i<ex.sets;i++){
+    const d = document.createElement('div');
+    d.className = 'setdot' + (i < session.setIndex ? ' done' : (i === session.setIndex ? ' current' : ''));
+    d.textContent = i < session.setIndex ? '✓' : (i+1);
+    wrap.appendChild(d);
+  }
+}
+function completeSet(){
+  const ex = currentExercise();
+  if(session.setIndex >= ex.sets){ goToNextExerciseOrFinish(); return; }
+  session.setIndex++;
+  renderSetDots(ex);
+  beep(880,0.1); buzz(30);
+  if(session.setIndex >= ex.sets){
+    document.getElementById('btn-complete-set').textContent = 'Esercizio completato';
+    return;
+  }
+  startRest(session.routine.restSeconds || settings.restDefault);
+}
+function goToNextExerciseOrFinish(){
+  if(session.exIndex + 1 >= session.routine.exercises.length){ finishRoutine(); }
+  else { session.exIndex++; session.setIndex = 0; renderExercise(); }
+}
+function nextExercise(){ if(session.exIndex+1 < session.routine.exercises.length){ session.exIndex++; session.setIndex=0; renderExercise(); } }
+function prevExercise(){ if(session.exIndex>0){ session.exIndex--; session.setIndex=0; renderExercise(); } }
+function skipExercise(){ goToNextExerciseOrFinish(); }
+function exitSession(){ releaseWakeLock(); session=null; showView('view-home'); renderHome(); }
+function finishRoutine(){
+  releaseWakeLock();
+  history.push(new Date().toISOString());
+  localStorage.setItem('ac_history', JSON.stringify(history));
+  document.getElementById('complete-summary').textContent = `Hai completato "${session.routine.title}" — ${session.routine.exercises.length} esercizi`;
+  session = null;
+  showView('view-complete');
+}
+function goHome(){ showView('view-home'); renderHome(); }
+
+/* ============ VIEW SWITCH ============ */
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ============ REST TIMER ============ */
+function startRest(seconds){
+  ensureAudio();
+  restState = { total: seconds, remaining: seconds };
+  document.getElementById('rest-title').textContent = 'Recupero prima della prossima serie';
+  updateRestDisplay();
+  document.getElementById('overlay-rest').classList.add('active');
+  clearInterval(restTimerId);
+  const endTime = Date.now() + seconds*1000;
+  restTimerId = setInterval(()=>{
+    const remaining = Math.max(0, Math.round((endTime - Date.now())/1000));
+    restState.remaining = remaining;
+    updateRestDisplay();
+    if(remaining <= 3 && remaining > 0) beep(660,0.08);
+    if(remaining <= 0){ clearInterval(restTimerId); beep(1046,0.25); buzz([60,40,60]); closeRestOverlay(); }
+  }, 250);
+}
+function updateRestDisplay(){
+  document.getElementById('rest-time').textContent = restState.remaining;
+  const ring = document.getElementById('rest-ring');
+  ring.style.strokeDasharray = RING_CIRC;
+  const frac = restState.total > 0 ? restState.remaining/restState.total : 0;
+  ring.style.strokeDashoffset = RING_CIRC * frac;
+}
+function adjustRest(delta){
+  if(!restState) return;
+  restState.total = Math.max(10, restState.total + delta);
+  restState.remaining = Math.max(0, restState.remaining + delta);
+  clearInterval(restTimerId);
+  updateRestDisplay();
+  const endTime = Date.now() + restState.remaining*1000;
+  restTimerId = setInterval(()=>{
+    const remaining = Math.max(0, Math.round((endTime - Date.now())/1000));
+    restState.remaining = remaining;
+    updateRestDisplay();
+    if(remaining <= 3 && remaining > 0) beep(660,0.08);
+    if(remaining <= 0){ clearInterval(restTimerId); beep(1046,0.25); buzz([60,40,60]); closeRestOverlay(); }
+  }, 250);
+}
+function skipRest(){ clearInterval(restTimerId); closeRestOverlay(); }
+function closeRestOverlay(){ document.getElementById('overlay-rest').classList.remove('active'); }
+
+/* ============ TEMPO TIMER (fasi configurabili) ============ */
+function openTempoModal(){
+  document.getElementById('val-p1').textContent = tempoConfig.p1;
+  document.getElementById('val-p2').textContent = tempoConfig.p2;
+  document.getElementById('val-p3').textContent = tempoConfig.p3;
+  document.getElementById('val-p4').textContent = tempoConfig.p4;
+  document.getElementById('val-reps').textContent = tempoConfig.reps;
+  document.getElementById('modal-tempo-config').classList.add('active');
+}
+function closeTempoModal(){ document.getElementById('modal-tempo-config').classList.remove('active'); }
+function stepTempo(key, delta){
+  const min = key === 'reps' ? 1 : 0;
+  tempoConfig[key] = Math.max(min, tempoConfig[key] + delta);
+  document.getElementById('val-'+key).textContent = tempoConfig[key];
+}
+function startTempoFromModal(){
+  closeTempoModal();
+  startTempo(tempoConfig);
+}
+const PHASE_LABELS = [
+  {label:'SPINTA / SFORZO', key:'p1'},
+  {label:'PAUSA IN TENSIONE', key:'p2'},
+  {label:'RITORNO', key:'p3'},
+  {label:'PAUSA', key:'p4'},
+];
+function startTempo(cfg){
+  ensureAudio();
+  const phases = PHASE_LABELS.filter(p => cfg[p.key] > 0);
+  if(phases.length === 0){ return; }
+  tempoState = { cfg, phases, rep:1, phaseIdx:0, remaining: cfg[phases[0].key], paused:false };
+  document.getElementById('overlay-tempo').classList.add('active');
+  updateTempoDisplay();
+  runTempoTick();
+}
+function runTempoTick(){
+  clearInterval(tempoTimerId);
+  let endTime = Date.now() + tempoState.remaining*1000;
+  tempoTimerId = setInterval(()=>{
+    if(tempoState.paused) { endTime = Date.now() + tempoState.remaining*1000; return; }
+    const remaining = Math.max(0, Math.round((endTime - Date.now())/1000*10)/10);
+    tempoState.remaining = remaining;
+    updateTempoDisplay();
+    if(remaining <= 0){
+      beep(880,0.08);
+      advanceTempoPhase();
+      endTime = Date.now() + tempoState.remaining*1000;
+    }
+  }, 100);
+}
+function advanceTempoPhase(){
+  tempoState.phaseIdx++;
+  if(tempoState.phaseIdx >= tempoState.phases.length){
+    tempoState.phaseIdx = 0;
+    tempoState.rep++;
+    if(tempoState.rep > tempoState.cfg.reps){
+      clearInterval(tempoTimerId);
+      beep(1046,0.3); buzz([60,40,60]);
+      document.getElementById('overlay-tempo').classList.remove('active');
+      tempoState = null;
+      return;
+    }
+  }
+  const phase = tempoState.phases[tempoState.phaseIdx];
+  tempoState.remaining = tempoState.cfg[phase.key];
+}
+function updateTempoDisplay(){
+  if(!tempoState) return;
+  const phase = tempoState.phases[tempoState.phaseIdx];
+  document.getElementById('tempo-rep-count').textContent = `Ripetizione ${tempoState.rep}/${tempoState.cfg.reps}`;
+  document.getElementById('tempo-phase-label').textContent = phase.label;
+  document.getElementById('tempo-time').textContent = Math.ceil(tempoState.remaining);
+  const ring = document.getElementById('tempo-ring');
+  const total = tempoState.cfg[phase.key] || 1;
+  ring.style.strokeDasharray = RING_CIRC;
+  ring.style.strokeDashoffset = RING_CIRC * (tempoState.remaining/total);
+}
+function pauseTempo(){
+  if(!tempoState) return;
+  tempoState.paused = !tempoState.paused;
+  document.getElementById('tempo-pause-btn').textContent = tempoState.paused ? 'Riprendi' : 'Pausa';
+}
+function stopTempo(){
+  clearInterval(tempoTimerId);
+  tempoState = null;
+  document.getElementById('overlay-tempo').classList.remove('active');
+}
+
+/* ============ SETTINGS ============ */
+function openSettings(){
+  document.getElementById('switch-sound').classList.toggle('on', settings.sound);
+  document.getElementById('val-restDefault').textContent = settings.restDefault;
+  document.getElementById('modal-settings').classList.add('active');
+}
+function closeSettings(){ document.getElementById('modal-settings').classList.remove('active'); saveSettings(); }
+function toggleSetting(key){ settings[key] = !settings[key]; document.getElementById('switch-'+key).classList.toggle('on', settings[key]); }
+function stepSetting(key, delta){ settings[key] = Math.max(15, settings[key]+delta); document.getElementById('val-'+key).textContent = settings[key]; }
+function saveSettings(){ localStorage.setItem('ac_settings', JSON.stringify(settings)); }
+
+/* ============ INIT ============ */
+renderHome();
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
+</script>
+</body>
+</html>
