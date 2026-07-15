@@ -2,14 +2,14 @@
   "name": "Muvapp",
   "short_name": "Muvapp",
   "description": "Guida ai tuoi allenamenti, esercizio per esercizio",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "https://gredai.github.io/muvapp/",
+  "scope": "https://gredai.github.io/muvapp/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0F1115",
   "theme_color": "#0F1115",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "https://gredai.github.io/muvapp/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "https://gredai.github.io/muvapp/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ]
 }
