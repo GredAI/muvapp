@@ -134,6 +134,20 @@
   .week-plan-row .wpr-class{font-size:13px; color:var(--text);}
   .week-plan-row .wpr-extra{font-size:12px; color:var(--text-dim); margin-top:2px;}
   .week-toggle{background:none; border:none; color:var(--accent); font-size:13px; font-weight:700; padding:10px 0 4px; text-align:center; width:100%;}
+  .gym-link-card{display:flex; align-items:center; justify-content:space-between; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:16px; margin-bottom:14px; cursor:pointer;}
+  .gym-link-card .glc-title{font-weight:700; font-size:15px;}
+  .gym-link-card .glc-sub{color:var(--text-dim); font-size:12px; margin-top:2px;}
+  .day-tabs{display:flex; gap:6px; overflow-x:auto; padding:2px 0 14px;}
+  .day-tab{flex-shrink:0; background:var(--bg-card2); border:1px solid var(--border); color:var(--text-dim); font-size:13px; font-weight:600; padding:8px 14px; border-radius:999px;}
+  .day-tab.active{background:var(--accent); border-color:var(--accent); color:#1a0e02;}
+  .gym-row{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; gap:10px;}
+  .gym-row .gr-left{display:flex; flex-direction:column; gap:2px;}
+  .gym-row .gr-name{font-weight:700; font-size:14px;}
+  .gym-row .gr-time{color:var(--text-dim); font-size:12px;}
+  .gym-tag{font-size:10px; font-weight:700; text-transform:uppercase; padding:2px 6px; border-radius:6px; background:var(--bg-card2); color:var(--text-dim); margin-left:6px;}
+  .gym-tag.active-tag{color:var(--accent);}
+  .uncertain-mark{color:var(--warn); font-size:11px; margin-left:4px;}
+  .cal-input{width:56px; background:var(--bg-card2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:6px; font-size:13px; text-align:center;}
 </style>
 </head>
 <body>
@@ -152,6 +166,14 @@
     <div class="today-card" id="today-card"></div>
     <button class="week-toggle" id="week-toggle-btn" onclick="toggleWeekView()">📅 Vedi la settimana intera</button>
     <div class="week-plan" id="week-plan"></div>
+
+    <div class="gym-link-card" onclick="openGymSchedule()">
+      <div>
+        <div class="glc-title">🏋️ Corsi in Palestra (FitActive)</div>
+        <div class="glc-sub">Palinsesto settimanale corsi di gruppo</div>
+      </div>
+      <span style="color:var(--text-dim);">→</span>
+    </div>
 
     <div class="chips" id="category-chips"></div>
 
@@ -218,6 +240,19 @@
     <h1>Allenamento completato!</h1>
     <p class="sub" id="complete-summary"></p>
     <button class="btn btn-primary" style="max-width:280px;" onclick="goHome()">Torna alla home</button>
+  </div>
+
+  <!-- GYM SCHEDULE VIEW -->
+  <div class="view" id="view-gym">
+    <div class="topbar" style="padding:0 0 10px;">
+      <button class="iconbtn" onclick="goHome()">✕</button>
+      <div class="exnum">Corsi in Palestra</div>
+      <div style="width:42px;"></div>
+    </div>
+    <p class="sub" style="margin-bottom:4px;">Palinsesto FitActive Castenaso — verifica sempre gli orari aggiornati in palestra, potrebbero cambiare.</p>
+    <p class="sub" style="margin-top:0;">Il dispendio calorico è a cura tua: tocca il campo numerico per inserirlo o modificarlo.</p>
+    <div class="day-tabs" id="gym-day-tabs"></div>
+    <div id="gym-course-list"></div>
   </div>
 
 </div>
@@ -645,6 +680,66 @@ function todayPlan(){
   return WEEKLY_PLAN[idx];
 }
 
+/* ============ PALINSESTO CORSI PALESTRA (FitActive) ============ */
+/* Trascritto da uno screenshot del palinsesto — orari mattutini confermati con buona confidenza,
+   quelli serali (contrassegnati uncertain:true) andrebbero verificati in palestra. */
+const GYM_SCHEDULE = [
+  { day:'Lunedì', name:'TBW', tag:'Sala Corsi', start:'9:30', end:'10:15' },
+  { day:'Lunedì', name:'H.I.I.T.', tag:'Active', start:'10:15', end:'11:00' },
+  { day:'Lunedì', name:'ABS', tag:'Sala Corsi', start:'11:00', end:'11:30' },
+  { day:'Lunedì', name:'Upper Body', tag:'Active', start:'11:30', end:'12:00' },
+  { day:'Lunedì', name:'Circuit', tag:'Active', start:'13:00', end:'13:45' },
+  { day:'Lunedì', name:'Postural', tag:'Active', start:'17:30', end:'18:15' },
+  { day:'Lunedì', name:'EMOM', tag:'Active', start:'18:15', end:'19:00' },
+  { day:'Lunedì', name:'Circuit', tag:'Active', start:'19:00', end:'19:45' },
+  { day:'Lunedì', name:'Tabata', tag:'Sala Corsi', start:'19:45', end:'20:30' },
+
+  { day:'Martedì', name:'Yoga', tag:'Sala Corsi', start:'9:00', end:'10:00' },
+  { day:'Martedì', name:'Pilates', tag:'Sala Corsi', start:'10:00', end:'10:45' },
+  { day:'Martedì', name:'GAG', tag:'Active', start:'10:45', end:'11:30' },
+  { day:'Martedì', name:'H.I.I.T.', tag:'Active', start:'11:30', end:'12:00' },
+  { day:'Martedì', name:'Yoga', tag:'Sala Corsi', start:'12:30', end:'13:30' },
+  { day:'Martedì', name:'Tabata', tag:'Sala Corsi', start:'13:30', end:'14:00' },
+  { day:'Martedì', name:'Circuit', tag:'Active', start:'18:00', end:'18:45' },
+  { day:'Martedì', name:'Ritmo (cardio dance)', tag:'Active', start:'18:45', end:'19:30', uncertain:true },
+  { day:'Martedì', name:'Ritmo do Brazil', tag:'Sala Corsi', start:'19:30', end:'20:15', uncertain:true },
+  { day:'Martedì', name:'Pump', tag:'Sala Corsi', start:'20:15', end:'21:00', uncertain:true },
+
+  { day:'Mercoledì', name:'Ginnastica Dolce', tag:'Sala Corsi', start:'9:30', end:'10:15' },
+  { day:'Mercoledì', name:'TBW', tag:'Sala Corsi', start:'10:15', end:'11:00' },
+  { day:'Mercoledì', name:'Tabata', tag:'Sala Corsi', start:'11:00', end:'11:30' },
+  { day:'Mercoledì', name:'Le Mills / Butt', tag:'Sala Corsi', start:'11:30', end:'12:00', uncertain:true },
+  { day:'Mercoledì', name:'Salsa Dance', tag:'Sala Corsi', start:'12:45', end:'13:30' },
+  { day:'Mercoledì', name:'Pilates', tag:'Sala Corsi', start:'13:15', end:'14:00' },
+  { day:'Mercoledì', name:'Tone', tag:'Active', start:'17:30', end:'18:15' },
+  { day:'Mercoledì', name:'Salsa Dance', tag:'Sala Corsi', start:'18:15', end:'19:00', uncertain:true },
+  { day:'Mercoledì', name:'Booty', tag:'Sala Corsi', start:'19:00', end:'19:45', uncertain:true },
+  { day:'Mercoledì', name:'Latino Americano Dance', tag:'Sala Corsi', start:'19:45', end:'20:15', uncertain:true },
+
+  { day:'Giovedì', name:'Pilates', tag:'Sala Corsi', start:'9:15', end:'10:00' },
+  { day:'Giovedì', name:'GAG', tag:'Active', start:'10:00', end:'10:45' },
+  { day:'Giovedì', name:'Upper Body', tag:'Active', start:'10:45', end:'11:15' },
+  { day:'Giovedì', name:'Stretching Tone', tag:'Active', start:'11:15', end:'12:00' },
+  { day:'Giovedì', name:'Circuit', tag:'Active', start:'12:30', end:'13:15' },
+  { day:'Giovedì', name:'Postural', tag:'Active', start:'18:00', end:'18:45' },
+  { day:'Giovedì', name:'Pump', tag:'Active', start:'18:45', end:'19:30', uncertain:true },
+  { day:'Giovedì', name:'EMOM', tag:'Active', start:'19:30', end:'20:15' },
+  { day:'Giovedì', name:'Functional Training', tag:'Sala Corsi', start:'20:15', end:'21:00', uncertain:true },
+
+  { day:'Venerdì', name:'Circuit', tag:'Active', start:'9:30', end:'10:15' },
+  { day:'Venerdì', name:'H.I.I.T.', tag:'Active', start:'10:15', end:'11:00' },
+  { day:'Venerdì', name:'SixPack', tag:'Active', start:'11:00', end:'11:30' },
+  { day:'Venerdì', name:'Upper Body', tag:'Active', start:'11:30', end:'12:00' },
+  { day:'Venerdì', name:'Pump', tag:'Active', start:'12:45', end:'13:30' },
+  { day:'Venerdì', name:'Cardio Tone', tag:'Active', start:'17:00', end:'17:45' },
+  { day:'Venerdì', name:'GAG', tag:'Active', start:'17:45', end:'18:30' },
+  { day:'Venerdì', name:'Diva Fitness', tag:'Sala Corsi', start:'18:30', end:'19:15', uncertain:true },
+  { day:'Venerdì', name:'Zumba Fitness', tag:'Sala Corsi', start:'19:15', end:'20:15', uncertain:true },
+];
+const GYM_DAYS = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì'];
+let gymCalories = JSON.parse(localStorage.getItem('gym_calories') || '{}');
+let activeGymDay = GYM_DAYS[Math.min((new Date().getDay()+6)%7, 4)];
+
 /* ============ STATO ============ */
 let settings = JSON.parse(localStorage.getItem('ac_settings') || '{"sound":true,"restDefault":75}');
 let history = JSON.parse(localStorage.getItem('ac_history') || '[]');
@@ -867,6 +962,42 @@ function finishRoutine(){
   showView('view-complete');
 }
 function goHome(){ showView('view-home'); renderHome(); }
+
+/* ============ CORSI IN PALESTRA ============ */
+function openGymSchedule(){
+  showView('view-gym');
+  renderGymDayTabs();
+  renderGymCourseList();
+}
+function renderGymDayTabs(){
+  const wrap = document.getElementById('gym-day-tabs');
+  wrap.innerHTML = GYM_DAYS.map(d => `<div class="day-tab${d===activeGymDay?' active':''}" onclick="setGymDay('${d}')">${d}</div>`).join('');
+}
+function setGymDay(d){ activeGymDay = d; renderGymDayTabs(); renderGymCourseList(); }
+function renderGymCourseList(){
+  const list = document.getElementById('gym-course-list');
+  const courses = GYM_SCHEDULE.filter(c => c.day === activeGymDay);
+  list.innerHTML = courses.map((c, i) => {
+    const key = c.name;
+    const cal = gymCalories[key] || '';
+    const tagClass = c.tag === 'Active' ? 'gym-tag active-tag' : 'gym-tag';
+    const uncertain = c.uncertain ? '<span class="uncertain-mark">⚠︎ da verificare</span>' : '';
+    return `
+      <div class="gym-row">
+        <div class="gr-left">
+          <div class="gr-name">${c.name}<span class="${tagClass}">${c.tag}</span>${uncertain}</div>
+          <div class="gr-time">${c.start} – ${c.end}</div>
+        </div>
+        <input class="cal-input" type="number" placeholder="kcal" value="${cal}" onchange="setGymCalorie('${key.replace(/'/g,"\\'")}', this.value)">
+      </div>
+    `;
+  }).join('');
+}
+function setGymCalorie(name, value){
+  if(value === '' || value === null){ delete gymCalories[name]; }
+  else { gymCalories[name] = value; }
+  localStorage.setItem('gym_calories', JSON.stringify(gymCalories));
+}
 
 /* ============ VIEW SWITCH ============ */
 function showView(id){
