@@ -148,6 +148,13 @@
   .gym-tag.active-tag{color:var(--accent);}
   .uncertain-mark{color:var(--warn); font-size:11px; margin-left:4px;}
   .cal-input{width:56px; background:var(--bg-card2); border:1px solid var(--border); color:var(--text); border-radius:8px; padding:6px; font-size:13px; text-align:center;}
+  .gym-row.selected{border-color:var(--accent); background:var(--bg-card2);}
+  .select-dot{width:26px; height:26px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:14px; color:transparent;}
+  .select-dot.on{border-color:var(--accent); background:var(--accent); color:#1a0e02;}
+  .my-week-day-label{color:var(--accent); font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:14px 0 8px;}
+  .my-week-day-label:first-child{margin-top:0;}
+  .my-week-row{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;}
+  .empty-hint{color:var(--text-dim); font-size:14px; text-align:center; padding:40px 20px;}
 </style>
 </head>
 <body>
@@ -247,12 +254,23 @@
     <div class="topbar" style="padding:0 0 10px;">
       <button class="iconbtn" onclick="goHome()">✕</button>
       <div class="exnum">Corsi in Palestra</div>
-      <div style="width:42px;"></div>
+      <button class="iconbtn" onclick="openMyWeek()">📋</button>
     </div>
     <p class="sub" style="margin-bottom:4px;">Palinsesto FitActive Castenaso — verifica sempre gli orari aggiornati in palestra, potrebbero cambiare.</p>
-    <p class="sub" style="margin-top:0;">Il dispendio calorico è a cura tua: tocca il campo numerico per inserirlo o modificarlo.</p>
+    <p class="sub" style="margin-top:0;">Tocca il cerchio per aggiungere il corso alla tua settimana. Il dispendio calorico è a cura tua: tocca il campo numerico per inserirlo.</p>
     <div class="day-tabs" id="gym-day-tabs"></div>
     <div id="gym-course-list"></div>
+  </div>
+
+  <!-- MY WEEK VIEW -->
+  <div class="view" id="view-my-week">
+    <div class="topbar" style="padding:0 0 10px;">
+      <button class="iconbtn" onclick="showView('view-gym')">←</button>
+      <div class="exnum">La mia settimana in palestra</div>
+      <div style="width:42px;"></div>
+    </div>
+    <p class="sub">I corsi che hai selezionato dal palinsesto. Tocca ✕ per toglierli.</p>
+    <div id="my-week-list"></div>
   </div>
 
 </div>
@@ -973,6 +991,8 @@ function finishRoutine(){
 function goHome(){ showView('view-home'); renderHome(); }
 
 /* ============ CORSI IN PALESTRA ============ */
+let myGymWeek = JSON.parse(localStorage.getItem('gym_my_week') || '{}');
+function gymKey(c){ return `${c.day}|${c.name}|${c.start}`; }
 function openGymSchedule(){
   showView('view-gym');
   renderGymDayTabs();
@@ -987,17 +1007,20 @@ function renderGymCourseList(){
   const list = document.getElementById('gym-course-list');
   const courses = GYM_SCHEDULE.filter(c => c.day === activeGymDay);
   list.innerHTML = courses.map((c, i) => {
-    const key = c.name;
-    const cal = gymCalories[key] || '';
+    const calKey = c.name;
+    const cal = gymCalories[calKey] || '';
     const tagClass = c.tag === 'Active' ? 'gym-tag active-tag' : 'gym-tag';
     const uncertain = c.uncertain ? '<span class="uncertain-mark">⚠︎ da verificare</span>' : '';
+    const key = gymKey(c);
+    const isSelected = !!myGymWeek[key];
     return `
-      <div class="gym-row">
-        <div class="gr-left">
+      <div class="gym-row${isSelected ? ' selected' : ''}">
+        <div class="select-dot${isSelected ? ' on' : ''}" onclick="toggleMyWeek('${key.replace(/'/g,"\\'")}')">✓</div>
+        <div class="gr-left" style="flex:1; margin-left:10px;">
           <div class="gr-name">${c.name}<span class="${tagClass}">${c.tag}</span>${uncertain}</div>
           <div class="gr-time">${c.start} – ${c.end}</div>
         </div>
-        <input class="cal-input" type="number" placeholder="kcal" value="${cal}" onchange="setGymCalorie('${key.replace(/'/g,"\\'")}', this.value)">
+        <input class="cal-input" type="number" placeholder="kcal" value="${cal}" onchange="setGymCalorie('${calKey.replace(/'/g,"\\'")}', this.value)">
       </div>
     `;
   }).join('');
@@ -1006,6 +1029,43 @@ function setGymCalorie(name, value){
   if(value === '' || value === null){ delete gymCalories[name]; }
   else { gymCalories[name] = value; }
   localStorage.setItem('gym_calories', JSON.stringify(gymCalories));
+}
+function toggleMyWeek(key){
+  if(myGymWeek[key]) delete myGymWeek[key];
+  else myGymWeek[key] = true;
+  localStorage.setItem('gym_my_week', JSON.stringify(myGymWeek));
+  renderGymCourseList();
+}
+function openMyWeek(){
+  showView('view-my-week');
+  renderMyWeekList();
+}
+function renderMyWeekList(){
+  const wrap = document.getElementById('my-week-list');
+  const selectedKeys = Object.keys(myGymWeek).filter(k => myGymWeek[k]);
+  if(selectedKeys.length === 0){
+    wrap.innerHTML = '<div class="empty-hint">Non hai ancora selezionato corsi.<br>Torna al palinsesto e tocca il cerchio accanto a un corso per aggiungerlo qui.</div>';
+    return;
+  }
+  let html = '';
+  GYM_DAYS.forEach(day => {
+    const dayCourses = GYM_SCHEDULE.filter(c => c.day === day && myGymWeek[gymKey(c)]);
+    if(dayCourses.length === 0) return;
+    html += `<div class="my-week-day-label">${day}</div>`;
+    dayCourses.forEach(c => {
+      const key = gymKey(c);
+      html += `
+        <div class="my-week-row">
+          <div class="gr-left">
+            <div class="gr-name">${c.name}</div>
+            <div class="gr-time">${c.start} – ${c.end}</div>
+          </div>
+          <button class="iconbtn" style="width:34px; height:34px; font-size:14px;" onclick="toggleMyWeek('${key.replace(/'/g,"\\'")}'); renderMyWeekList();">✕</button>
+        </div>
+      `;
+    });
+  });
+  wrap.innerHTML = html;
 }
 
 /* ============ VIEW SWITCH ============ */
@@ -1174,6 +1234,7 @@ function exportBackup(){
     ac_settings: JSON.parse(localStorage.getItem('ac_settings') || '{}'),
     ac_history: JSON.parse(localStorage.getItem('ac_history') || '[]'),
     gym_calories: JSON.parse(localStorage.getItem('gym_calories') || '{}'),
+    gym_my_week: JSON.parse(localStorage.getItem('gym_my_week') || '{}'),
   };
   const dateStr = new Date().toISOString().slice(0,10);
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
@@ -1196,6 +1257,7 @@ function importBackup(file){
       if(data.ac_settings) localStorage.setItem('ac_settings', JSON.stringify(data.ac_settings));
       if(data.ac_history) localStorage.setItem('ac_history', JSON.stringify(data.ac_history));
       if(data.gym_calories) localStorage.setItem('gym_calories', JSON.stringify(data.gym_calories));
+      if(data.gym_my_week) localStorage.setItem('gym_my_week', JSON.stringify(data.gym_my_week));
       document.getElementById('backup-status').textContent = 'Backup importato ✓ — ricarico...';
       setTimeout(() => location.reload(), 800);
     }catch(err){
