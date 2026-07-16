@@ -337,6 +337,15 @@
       <label>Recupero predefinito<div class="field-sub">Tra una serie e l'altra</div></label>
       <div class="stepper"><button onclick="stepSetting('restDefault',-15)">−</button><span class="val" id="val-restDefault">75</span><button onclick="stepSetting('restDefault',15)">+</button></div>
     </div>
+    <div class="field" style="display:block;">
+      <label>Backup dati<div class="field-sub">Storico allenamenti, kcal corsi e impostazioni</div></label>
+      <div class="row" style="margin-top:10px;">
+        <button class="btn btn-secondary" onclick="exportBackup()">💾 Salva backup</button>
+        <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">📂 Importa backup</button>
+      </div>
+      <input type="file" id="import-file-input" accept="application/json" style="display:none;" onchange="importBackup(this.files[0])">
+      <div id="backup-status" style="font-size:12px; color:var(--text-dim); margin-top:8px;"></div>
+    </div>
     <button class="btn btn-secondary" style="margin-top:16px;" onclick="closeSettings()">Chiudi</button>
   </div>
 </div>
@@ -1156,6 +1165,45 @@ function closeSettings(){ document.getElementById('modal-settings').classList.re
 function toggleSetting(key){ settings[key] = !settings[key]; document.getElementById('switch-'+key).classList.toggle('on', settings[key]); }
 function stepSetting(key, delta){ settings[key] = Math.max(15, settings[key]+delta); document.getElementById('val-'+key).textContent = settings[key]; }
 function saveSettings(){ localStorage.setItem('ac_settings', JSON.stringify(settings)); }
+
+/* ============ BACKUP DATI ============ */
+function exportBackup(){
+  const backup = {
+    app: 'Muvapp',
+    exportedAt: new Date().toISOString(),
+    ac_settings: JSON.parse(localStorage.getItem('ac_settings') || '{}'),
+    ac_history: JSON.parse(localStorage.getItem('ac_history') || '[]'),
+    gym_calories: JSON.parse(localStorage.getItem('gym_calories') || '{}'),
+  };
+  const dateStr = new Date().toISOString().slice(0,10);
+  const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `muvapp_backup_${dateStr}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  document.getElementById('backup-status').textContent = 'Backup salvato ✓';
+}
+function importBackup(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try{
+      const data = JSON.parse(e.target.result);
+      if(data.ac_settings) localStorage.setItem('ac_settings', JSON.stringify(data.ac_settings));
+      if(data.ac_history) localStorage.setItem('ac_history', JSON.stringify(data.ac_history));
+      if(data.gym_calories) localStorage.setItem('gym_calories', JSON.stringify(data.gym_calories));
+      document.getElementById('backup-status').textContent = 'Backup importato ✓ — ricarico...';
+      setTimeout(() => location.reload(), 800);
+    }catch(err){
+      document.getElementById('backup-status').textContent = 'File non valido, riprova.';
+    }
+  };
+  reader.readAsText(file);
+}
 
 /* ============ INIT ============ */
 renderHome();
