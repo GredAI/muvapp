@@ -182,6 +182,14 @@
       <span style="color:var(--text-dim);">→</span>
     </div>
 
+    <div class="gym-link-card" onclick="openDiet()">
+      <div>
+        <div class="glc-title">🥗 Piano alimentare</div>
+        <div class="glc-sub">Pasti, norme e integrazione del coach</div>
+      </div>
+      <span style="color:var(--text-dim);">→</span>
+    </div>
+
     <div class="chips" id="category-chips"></div>
 
     <div id="routine-list"></div>
@@ -260,6 +268,17 @@
     <p class="sub" style="margin-top:0;">Tocca il cerchio per aggiungere il corso alla tua settimana. Il dispendio calorico è a cura tua: tocca il campo numerico per inserirlo.</p>
     <div class="day-tabs" id="gym-day-tabs"></div>
     <div id="gym-course-list"></div>
+  </div>
+
+  <!-- DIET VIEW -->
+  <div class="view" id="view-diet">
+    <div class="topbar" style="padding:0 0 10px;">
+      <button class="iconbtn" onclick="goHome()">✕</button>
+      <div class="exnum">Piano alimentare</div>
+      <div style="width:42px;"></div>
+    </div>
+    <p class="sub" id="diet-intro"></p>
+    <div id="diet-body"></div>
   </div>
 
   <!-- MY WEEK VIEW -->
@@ -374,6 +393,7 @@ const MUSCLE_COLORS = {
   'Grande Pettorale':'#EF4444', 'Piccolo Pettorale':'#3B82F6', 'Dentato Anteriore':'#10B981',
   'Pettorali':'#EF4444', 'Schiena':'#3B82F6', 'Bicipiti':'#8B5CF6', 'Tricipiti':'#06B6D4',
   'Spalle':'#F59E0B', 'Postura/Scapole':'#EC4899', 'Core':'#EAB308', 'Gambe':'#22C55E',
+  'Cardio':'#F97316',
   'Sterno-cleido-mastoideo':'#EF4444', 'Sottoioidei':'#3B82F6', 'Platisma':'#10B981', 'Erettori Spinali':'#8B5CF6',
 };
 function muscleColor(m){ return MUSCLE_COLORS[m] || '#6B7280'; }
@@ -690,7 +710,111 @@ const ROUTINES = [
         instr:'Tira verso il viso tenendo le scapole attive.', sets:3, reps:'12' },
     ]
   },
+  /* ---- Piano coach (EGO Wellness & Fitness) — dal 05/11/2026, 7 settimane ---- */
+  {
+    id: 'coach-w1',
+    title: 'Workout 1 — Gambe, Glutei, Tricipiti',
+    subtitle: 'Piano coach · 7 settimane',
+    category: 'Palestra',
+    duration: '60-70 min',
+    frequency: 'Workout 1 (giorno a scelta)',
+    restSeconds: 60,
+    notes: ['Recupero tra le serie: 50"-70".', 'A fine allenamento: 3 serie da 1 minuto di addominali.', 'Facoltativo: +10 min di cardio a intensità media alla fine.'],
+    exercises: [
+      { name:'Cardio — intensità media', muscles:['Cardio'], equip:'Tapis roulant / cardio', instr:'20 minuti a intensità media.', sets:1, reps:'20 min', warmup:true, section:'Cardio' },
+      { name:'Leg Extension', muscles:['Gambe'], equip:'Macchina', instr:'Estensione controllata, senza scatti.', sets:2, reps:'12', section:'Gambe & Glutei' },
+      { name:'Affondi con manubri', muscles:['Gambe'], equip:'Manubri', instr:'Busto eretto, ginocchio anteriore stabile.', sets:3, reps:'15', section:'Gambe & Glutei' },
+      { name:'Pressa orizzontale', muscles:['Gambe'], equip:'Macchina', instr:'Spingi con tutto il piede, senza bloccare le ginocchia.', sets:4, reps:'12', section:'Gambe & Glutei' },
+      { name:'Pressa a 45°', muscles:['Gambe'], equip:'Macchina', instr:'Discesa controllata, spinta decisa.', sets:4, reps:'8/10', section:'Gambe & Glutei' },
+      { name:'French Press con manubri (da seduto)', muscles:['Tricipiti'], equip:'Manubrio', instr:'Gomiti fermi e vicini alla testa.', sets:4, reps:'12', section:'Tricipiti' },
+      { name:'Triceps Machine', muscles:['Tricipiti'], equip:'Macchina', instr:'Estendi completamente senza staccare le spalle.', sets:3, reps:'12', section:'Tricipiti' },
+      { name:'Spinte in basso (pushdown)', muscles:['Tricipiti'], equip:'Cavo', instr:'Gomiti vicini al busto.', sets:3, reps:'12', section:'Tricipiti' },
+      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto.', sets:3, reps:'1 min', section:'Finale' },
+    ]
+  },
+  {
+    id: 'coach-w2',
+    title: 'Workout 2 — Dorsali, Femorali',
+    subtitle: 'Piano coach · 7 settimane',
+    category: 'Palestra',
+    duration: '60-70 min',
+    frequency: 'Workout 2 (giorno a scelta)',
+    restSeconds: 60,
+    notes: ['Recupero tra le serie: 50"-70".', 'A fine allenamento: 3 serie da 1 minuto di addominali.', 'Facoltativo: +10 min di cardio a intensità media alla fine.'],
+    exercises: [
+      { name:'Cardio — intensità alta', muscles:['Cardio'], equip:'Tapis roulant / cardio', instr:'20 minuti a intensità alta.', sets:1, reps:'20 min', warmup:true, section:'Cardio' },
+      { name:'Pulley basso', muscles:['Schiena'], equip:'Cavo', instr:'Porta le scapole indietro e in basso.', sets:3, reps:'12/15', section:'Dorsali' },
+      { name:'Lat triangolo', muscles:['Schiena'], equip:'Macchina / cavo', instr:'Tira verso il petto con i gomiti lungo i fianchi.', sets:3, reps:'8/10', section:'Dorsali' },
+      { name:'Vertical (trazioni alla macchina)', muscles:['Schiena'], equip:'Macchina', instr:'Movimento fluido, controlla il ritorno.', sets:4, reps:'15', section:'Dorsali' },
+      { name:'Leg Curl in piedi', muscles:['Gambe'], equip:'Macchina', instr:'Una gamba alla volta, bacino stabile.', sets:3, reps:'8', section:'Femorali' },
+      { name:'Leg Curl da seduta', muscles:['Gambe'], equip:'Macchina', instr:'Flessione completa, ritorno lento.', sets:3, reps:'10', section:'Femorali' },
+      { name:'Hack Squat', muscles:['Gambe'], equip:'Macchina', instr:'Schiena aderente, discesa controllata.', sets:3, reps:'12', section:'Femorali' },
+      { name:'Leg Curl sdraiata', muscles:['Gambe'], equip:'Macchina', instr:'Bacino aderente alla panca.', sets:2, reps:'15', section:'Femorali' },
+      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto.', sets:3, reps:'1 min', section:'Finale' },
+    ]
+  },
+  {
+    id: 'coach-w3',
+    title: 'Workout 3 — Spalle, Bicipiti',
+    subtitle: 'Piano coach · 7 settimane',
+    category: 'Palestra',
+    duration: '55-65 min',
+    frequency: 'Workout 3 (giorno a scelta)',
+    restSeconds: 60,
+    notes: ['Recupero tra le serie: 50"-70".', 'A fine allenamento: 3 serie da 1 minuto di addominali.', 'Facoltativo: +10 min di cardio a intensità media alla fine.', 'Attenzione alla spalla: esegui con carichi controllati e scapole stabili.'],
+    exercises: [
+      { name:'Cardio — intensità media', muscles:['Cardio'], equip:'Tapis roulant / cardio', instr:'25 minuti a intensità media.', sets:1, reps:'25 min', warmup:true, section:'Cardio' },
+      { name:'Alzate laterali', muscles:['Spalle'], equip:'Manubri', instr:'Fino all\'altezza delle spalle, gomiti leggermente flessi.', sets:3, reps:'15', section:'Spalle' },
+      { name:'Alzate frontali (manubrio singolo)', muscles:['Spalle'], equip:'Manubrio', instr:'Sale fino all\'altezza delle spalle, senza slancio.', sets:3, reps:'15', section:'Spalle' },
+      { name:'Spinte in alto con manubri', muscles:['Spalle'], equip:'Manubri', instr:'Spingi in alto senza inarcare la schiena.', sets:5, reps:'12', section:'Spalle' },
+      { name:'Curl alla panca Scott', muscles:['Bicipiti'], equip:'Panca Scott + bilanciere/manubri', instr:'Estensione completa, ritorno lento.', sets:4, reps:'12/15', section:'Bicipiti' },
+      { name:'Curl con manubri alternati', muscles:['Bicipiti'], equip:'Manubri', instr:'Gomiti fermi lungo i fianchi.', sets:4, reps:'10/12', section:'Bicipiti' },
+      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto.', sets:3, reps:'1 min', section:'Finale' },
+    ]
+  },
 ];
+
+/* ============ PIANO ALIMENTARE (coach) ============ */
+/* Nota: dati fisici/misure NON inseriti (repo pubblico). */
+const DIET_PLAN = {
+  intro: 'Dal 05/11/2026 · 7 settimane · Obiettivo: ricomposizione corporea · Check ogni 2 settimane.',
+  sections: [
+    { title:'Pasto libero (1 a settimana, dopo il primo check)', items:[
+      'SÌ: sushi senza fritti (max 12 pezzi, crudo a volontà); bistecca con patate bollite; pizza rossa con olio a crudo; primi non troppo elaborati, senza creme iperccaloriche.',
+      'NO: gelati, torte, fritture.',
+      'Da favorire: pesce azzurro (omega-3), olio EVO, frutta e verdura colorata, spezie antinfiammatorie (curcuma, zenzero).' ]},
+    { title:'Norme alimentari', items:[
+      'Cotture: vapore, forno, griglia.',
+      'Preferire cereali integrali / basso indice glicemico.',
+      'Olio EVO aggiunto a crudo dopo la cottura.',
+      'Bere almeno 4 litri di acqua al giorno (acqua a residuo fisso).',
+      'Non eliminare il sale (iodato). Spezie e aromi liberi.',
+      'Bevande 0 kcal/light libere; dolcificanti e salse 0 kcal con moderazione; caffè/tè senza zucchero.',
+      'Pasti distanziati di circa 2,5–3 ore.',
+      'Pasto solido post-allenamento entro 1–1,30 h dalla fine dell\'allenamento e dello shaker.' ]},
+    { title:'Colazione (scegli una)', items:[
+      '1) 200 g Skyr o yogurt greco zero + 40 g crema di riso + 50 g banana',
+      '2) 200 g albumi + 45 g crema di riso (pancake) + 70 g banana',
+      '3) 160 g albumi + 1 uovo intero + 40 g Wasa integrali' ]},
+    { title:'Spuntino mattina', items:['1 uovo intero + 150 g albumi'] },
+    { title:'Pranzo — primo (scegli uno)', items:['60 g pasta di farro/kamut','60 g cous cous integrale','70 g riso Venere'] },
+    { title:'Pranzo — secondo (scegli uno)', items:['150 g petto di pollo o pesce bianco','150 g vitello magro','180 g orata','160 g tacchino'] },
+    { title:'Pranzo — contorno (scegli uno, + 5 g olio EVO)', items:['200 g zucchine','200 g finocchi','160 g carote'] },
+    { title:'Spuntino pomeriggio', items:['150 g yogurt greco zero + 35 g proteine isolate'] },
+    { title:'Cena', items:['180 g patate + 180 g merluzzo o nasello (oppure 160 g vitello) + 200 g finocchi + 6 g olio EVO','Oppure un\'altra combinazione del pranzo non ancora consumata.'] },
+    { title:'Integrazione', items:[
+      '3 "Alc Plus Why Sport" prima dell\'allenamento',
+      '3 "Celite Why Sport" prima di dormire',
+      '1 "Lipoic 1000 Why Sport" prima di colazione, pranzo e cena' ]},
+  ]
+};
+function openDiet(){
+  showView('view-diet');
+  document.getElementById('diet-intro').textContent = DIET_PLAN.intro;
+  document.getElementById('diet-body').innerHTML = DIET_PLAN.sections.map(s =>
+    `<div class="card"><h2 style="font-size:16px;">${s.title}</h2><ul class="notes-list">${s.items.map(i=>`<li>${i}</li>`).join('')}</ul></div>`
+  ).join('');
+}
 
 /* ============ PIANO SETTIMANALE ============ */
 const WEEKLY_PLAN = [
