@@ -81,7 +81,7 @@ Timer di recupero: pausa, ±15s, salta. Timer a tempo (⏱️ in sessione): fasi
 - **Tap su "Serie completata" segnava la serie fatta senza conferma**: introdotto il flusso a due fasi (Inizia → Segna completata) descritto sopra.
 
 ### Piano coach (EGO Wellness & Fitness, dal 05/11/2026, 7 settimane)
-- Schede `coach-w1` (Gambe/Glutei/Tricipiti), `coach-w2` (Dorsali/Femorali), `coach-w3` (Spalle/Bicipiti), categoria "Palestra", recupero 50-70", addominali 3×1 min a fine seduta. Il giorno di ogni workout NON è specificato (non collegati a WEEKLY_PLAN).
+- Schede `coach-w1` (Gambe/Glutei/Tricipiti), `coach-w2` (Dorsali/Femorali), `coach-w3` (Spalle/Bicipiti), categoria "Ego", recupero 50-70", addominali 3×1 min a fine seduta. Il giorno di ogni workout NON è specificato (non collegati a WEEKLY_PLAN).
 - `DIET_PLAN` + `openDiet()` / `#view-diet`: schermata "🥗 Piano alimentare" in home (sola lettura): norme, pasti, integrazione, pasto libero.
 - Misure corporee (peso, % grasso, ecc.) volutamente NON nel codice: il repo è pubblico.
 
