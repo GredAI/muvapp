@@ -192,6 +192,14 @@
       <span style="color:var(--text-dim);">→</span>
     </div>
 
+    <div class="gym-link-card" onclick="openSubs()">
+      <div>
+        <div class="glc-title">🔄 Cibi sostitutivi</div>
+        <div class="glc-sub">Alimenti equivalenti e grammi, per la ricomposizione</div>
+      </div>
+      <span style="color:var(--text-dim);">→</span>
+    </div>
+
     <div class="gym-link-card" onclick="openDayPlan()">
       <div>
         <div class="glc-title">📅 Piano del giorno (corsi + Ego)</div>
@@ -290,6 +298,17 @@
     </div>
     <div class="day-tabs" id="plan-day-tabs"></div>
     <div id="plan-body"></div>
+  </div>
+
+  <!-- SUBS VIEW -->
+  <div class="view" id="view-subs">
+    <div class="topbar" style="padding:0 0 10px;">
+      <button class="iconbtn" onclick="goHome()">✕</button>
+      <div class="exnum">Cibi sostitutivi</div>
+      <div style="width:42px;"></div>
+    </div>
+    <p class="sub" id="subs-intro"></p>
+    <div id="subs-body"></div>
   </div>
 
   <!-- DIET VIEW -->
@@ -836,6 +855,44 @@ const DIET_PLAN = {
       '1 "Lipoic 1000 Why Sport" prima di colazione, pranzo e cena' ]},
   ]
 };
+
+/* ============ CIBI SOSTITUTIVI ============ */
+/* Scambi indicativi (valori medi, ±10-15%): pesi a crudo, da confermare con il coach. */
+const SUBS_INTRO = 'Obiettivo: ricomposizione corporea (perdere grasso mantenendo o aumentando la massa magra). Per questo: scambia solo dentro la stessa categoria, tieni le proteine in ogni pasto, non aumentare le kcal e pesa gli alimenti a crudo. Gli scambi sono indicativi (±10-15%): confermali col coach.';
+const SUBS = [
+  { title:'Proteina di pranzo e cena', color:'#E74C3C', ref:'150 g petto di pollo', macro:'≈ 160 kcal · 33 g proteine', items:[
+    ['150 g','Petto di pollo'], ['160 g','Tacchino'], ['170 g','Nasello o merluzzo'], ['150 g','Vitello magro o cavallo'],
+    ['180 g','Orata','un po\' più calorica (≈ 200 kcal)'], ['200 g','Gamberi'],
+    ['170 g','Carne salada Alpenspitz','94 kcal e 19 g proteine per 100 g · molto sale: 1-2 volte a settimana, da confermare col coach'],
+    ['250 g','Albumi','meno proteine (≈ 26 g)'] ]},
+  { title:'Spuntino del mattino', color:'#F39C12', ref:'1 uovo + 150 g albumi', macro:'≈ 150 kcal · 23 g proteine', items:[
+    ['100 g','Tonno al naturale (scolato)'], ['150 g','Fiocchi di latte light'], ['80 g','Bresaola','sale alto'], ['30 g','Proteine isolate','≈ 110 kcal · 27 g proteine'] ]},
+  { title:'Spuntino del pomeriggio', color:'#16A085', ref:'150 g yogurt greco zero + 35 g proteine isolate', macro:'≈ 215 kcal · 46 g proteine', items:[
+    ['200 g + 20 g','Skyr + proteine isolate'], ['250 g + 15 g','Fiocchi di latte light + proteine isolate'] ]},
+  { title:'Colazione — carboidrato', color:'#8E44AD', ref:'40 g crema di riso', macro:'≈ 145 kcal · 32 g carboidrati', items:[
+    ['40 g','Fiocchi d\'avena','più fibra, circa 3 g di grassi'], ['40 g','Wasa integrali'], ['40 g','Fette biscottate integrali'] ]},
+  { title:'Primo di pranzo', color:'#3498DB', ref:'60 g pasta di farro o kamut', macro:'≈ 205 kcal · 40 g carboidrati', items:[
+    ['60 g','Cous cous integrale'], ['70 g','Riso Venere','già nel piano'], ['55-60 g','Riso integrale o basmati'], ['60 g','Pasta integrale'],
+    ['80 g','Pane integrale'], ['250 g','Patate'], ['130 g','Gnocchi di patate','meno fibra, indice glicemico più alto: scambio occasionale'] ]},
+  { title:'Patate a cena', color:'#27AE60', ref:'180 g patate', macro:'≈ 140 kcal · 31 g carboidrati', items:[
+    ['90 g','Gnocchi di patate','quasi il doppio delle kcal delle patate: dimezza il peso'], ['40 g','Riso o pasta (a crudo)'], ['55 g','Pane integrale'], ['160 g','Patate dolci'] ]},
+  { title:'Frutta', color:'#E67E22', ref:'50 g banana', macro:'≈ 45 kcal · 10 g carboidrati', items:[
+    ['100 g','Mela o pera'], ['100 g','Arancia'], ['150 g','Frutti di bosco o fragole'] ]},
+  { title:'Contorno', color:'#2ECC71', ref:'200 g zucchine o finocchi', macro:'≈ 35-40 kcal', items:[
+    ['200 g','Spinaci, bietole, broccoli, cavolfiore'], ['200 g','Cetrioli, insalata, pomodori, peperoni'], ['160 g','Carote','già nel piano, più zuccheri'] ]},
+  { title:'Grassi', color:'#F1C40F', ref:'5 g olio extravergine a crudo', macro:'≈ 45 kcal', items:[
+    ['8 g','Mandorle o noci'] ]},
+];
+function openSubs(){
+  showView('view-subs');
+  document.getElementById('subs-intro').textContent = SUBS_INTRO;
+  document.getElementById('subs-body').innerHTML = SUBS.map(c => `
+    <div class="card" style="border-left:5px solid ${c.color};">
+      <div style="font-weight:800; font-size:16px; color:${c.color}; margin-bottom:4px;">${c.title}</div>
+      <div style="font-size:13px; color:var(--text-dim); margin-bottom:10px;">Nel piano: <b style="color:var(--text);">${c.ref}</b> · ${c.macro}</div>
+      <ul class="notes-list">${c.items.map(i => `<li><div style="display:flex; gap:12px; align-items:baseline;"><b style="min-width:88px; color:${c.color};">${i[0]}</b><span>${i[1]}</span></div>${i[2] ? `<div style="font-size:12px; margin-left:100px;">${i[2]}</div>` : ''}</li>`).join('')}</ul>
+    </div>`).join('');
+}
 function openDiet(){
   showView('view-diet');
   document.getElementById('diet-intro').textContent = DIET_PLAN.intro;
