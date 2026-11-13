@@ -192,6 +192,14 @@
       <span style="color:var(--text-dim);">→</span>
     </div>
 
+    <div class="gym-link-card" onclick="openDayPlan()">
+      <div>
+        <div class="glc-title">📅 Piano del giorno (corsi + Ego)</div>
+        <div class="glc-sub">Cosa fare, saltare o ridurre in base ai tuoi corsi</div>
+      </div>
+      <span style="color:var(--text-dim);">→</span>
+    </div>
+
     <div class="chips" id="category-chips"></div>
 
     <div id="routine-list"></div>
@@ -271,6 +279,17 @@
     <p class="sub" style="margin-top:0;">Tocca il cerchio per aggiungere il corso alla tua settimana. Il dispendio calorico è a cura tua: tocca il campo numerico per inserirlo.</p>
     <div class="day-tabs" id="gym-day-tabs"></div>
     <div id="gym-course-list"></div>
+  </div>
+
+  <!-- DAY PLAN VIEW -->
+  <div class="view" id="view-plan">
+    <div class="topbar" style="padding:0 0 10px;">
+      <button class="iconbtn" onclick="goHome()">✕</button>
+      <div class="exnum">Piano del giorno</div>
+      <div style="width:42px;"></div>
+    </div>
+    <div class="day-tabs" id="plan-day-tabs"></div>
+    <div id="plan-body"></div>
   </div>
 
   <!-- DIET VIEW -->
@@ -950,18 +969,24 @@ document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState 
 /* ============ RENDER HOME ============ */
 let activeCategory = 'Tutte';
 function renderTodayCard(){
-  const plan = todayPlan();
+  const day = DAYS_ALL[(new Date().getDay() + 6) % 7];
+  const p = planForDay(day);
   const card = document.getElementById('today-card');
-  const routine = ROUTINES.find(r => r.id === plan.routineId);
+  const short = [];
+  if(p.courses.length) short.push('Corsi: ' + p.courses.map(c => c.name).join(', '));
+  else short.push('Nessun corso selezionato');
+  if(p.skips.length) short.push('salta ' + p.skips.map(x => x.short).join(' e '));
   card.innerHTML = `
-    <div class="today-label">Oggi — ${plan.day}</div>
-    <div class="today-class">${plan.classLabel}</div>
-    <div class="today-sub">${plan.extra || ''}${plan.cardio ? ' · 🏃 ' + plan.cardio : ''}</div>
-    ${routine ? `<button class="btn btn-primary" onclick="startRoutineById('${routine.id}')">Inizia: ${routine.title}</button>` : ''}
+    <div class="today-label">Oggi — ${day}</div>
+    <div class="today-class">Ego: ${p.routine.title.split(' — ')[0]}</div>
+    <div class="today-sub">${p.routine.title.split(' — ')[1] || ''} · ${short.join(' · ')}</div>
+    <button class="btn btn-primary" onclick="startRoutineById('${p.routine.id}')">Inizia: ${p.routine.title.split(' — ')[0]}</button>
+    <button class="btn btn-secondary" style="margin-top:8px;" onclick="openDayPlan('${day}')">📅 Apri il piano del giorno</button>
   `;
 }
 function renderCategoryChips(){
-  const cats = ['Tutte', ...new Set(ROUTINES.map(r => r.category))];
+  const others = [...new Set(ROUTINES.map(r => r.category))].filter(c => c !== 'Ego');
+  const cats = ['Tutte', 'Ego', ...others];
   const wrap = document.getElementById('category-chips');
   wrap.innerHTML = cats.map(c => `<div class="chip${c===activeCategory?' active':''}" onclick="setCategory('${c}')">${c}</div>`).join('');
 }
@@ -1133,6 +1158,86 @@ function finishRoutine(){
   showView('view-complete');
 }
 function goHome(){ showView('view-home'); renderHome(); }
+
+/* ============ PIANO DEL GIORNO (corsi + Ego) ============ */
+const DAYS_ALL = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato','Domenica'];
+const EGO_IDS = ['coach-w1','coach-w2','coach-w3'];
+// cosa "copre" ogni corso: cardio / addominali / gambe / parte alta (1 = pieno, 0.5 = parziale)
+const COURSE_RULES = {
+  'H.I.I.T.':{cardio:1}, 'Tabata':{cardio:1}, 'Circuit':{cardio:1}, 'EMOM':{cardio:1}, 'Cardio Tone':{cardio:1},
+  'Zumba Fitness':{cardio:1}, 'Step Dance':{cardio:1}, 'Salsa':{cardio:1}, 'Diva Fitness':{cardio:1},
+  'ABS':{abs:1}, 'SixPack':{abs:1}, 'GAG':{abs:1, legs:1},
+  'Legs and Butt':{legs:1}, 'Booty Workout':{legs:1}, 'Upper Body':{upper:1},
+  'Pump':{legs:0.5, upper:0.5}, 'TBW':{legs:0.5, upper:0.5},
+  'Pilates':{}, 'Yoga':{}, 'Postural':{}
+};
+const MUSCLE_GROUP = { 'Gambe':'legs', 'Schiena':'upper', 'Spalle':'upper', 'Bicipiti':'upper', 'Tricipiti':'upper' };
+const GROUP_LABEL = { legs:'Gambe e glutei', upper:'Spalle, braccia e dorsali' };
+function coursesForDay(day){ return GYM_SCHEDULE.filter(c => c.day === day && myGymWeek[gymKey(c)]); }
+function planForDay(day){
+  const courses = coursesForDay(day);
+  const L = { legs:0, upper:0, causes:{legs:[], upper:[]}, cardio:[], abs:[] };
+  courses.forEach(c => {
+    const r = COURSE_RULES[c.name] || {};
+    if(r.cardio && !L.cardio.includes(c.name)) L.cardio.push(c.name);
+    if(r.abs && !L.abs.includes(c.name)) L.abs.push(c.name);
+    ['legs','upper'].forEach(g => { if(r[g]){ L[g] = Math.max(L[g], r[g]); if(!L.causes[g].includes(c.name)) L.causes[g].push(c.name); } });
+  });
+  const routines = EGO_IDS.map(id => ROUTINES.find(r => r.id === id));
+  const start = Math.max(0, DAYS_ALL.indexOf(day));
+  let best = 0, bestScore = Infinity;
+  for(let i = 0; i < 3; i++){
+    const j = (start + i) % 3;
+    let score = 0;
+    routines[j].exercises.forEach(e => {
+      if(e.warmup || e.section === 'Finale') return;
+      const g = MUSCLE_GROUP[(e.muscles || [])[0]];
+      if(g) score += L[g] * e.sets;
+    });
+    if(score < bestScore){ bestScore = score; best = j; }
+  }
+  const routine = routines[best];
+  const skips = [], reduce = [];
+  if(L.cardio.length) skips.push({ short:'il cardio iniziale', text:`<b>Cardio iniziale</b> (già fatto con ${L.cardio.join(', ')})` });
+  if(L.abs.length) skips.push({ short:'gli addominali finali', text:`<b>Addominali finali</b> (già fatti con ${L.abs.join(', ')})` });
+  ['legs','upper'].forEach(g => {
+    if(L[g] > 0 && routine.exercises.some(e => MUSCLE_GROUP[(e.muscles||[])[0]] === g)){
+      const n = L[g] >= 1 ? 2 : 1;
+      reduce.push(`${GROUP_LABEL[g]}: già lavorati da ${L.causes[g].join(', ')} → ${n} ${n === 1 ? 'serie in meno' : 'serie in meno'} per esercizio.`);
+    }
+  });
+  return { day, courses, routine, skips, reduce };
+}
+let activePlanDay = DAYS_ALL[(new Date().getDay() + 6) % 7];
+function openDayPlan(day){
+  if(day) activePlanDay = day;
+  showView('view-plan');
+  renderPlanTabs();
+  renderPlanBody();
+}
+function renderPlanTabs(){
+  document.getElementById('plan-day-tabs').innerHTML = DAYS_ALL.map(d => `<div class="day-tab${d===activePlanDay?' active':''}" onclick="openDayPlan('${d}')">${d.slice(0,3)}</div>`).join('');
+}
+function renderPlanBody(){
+  const p = planForDay(activePlanDay);
+  const sec = (color, title, html) => `<div class="card" style="border-left:5px solid ${color};"><div style="font-weight:800; color:${color}; font-size:13px; text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px;">${title}</div>${html}</div>`;
+  const li = arr => '<ul class="notes-list">' + arr.map(x => `<li>${x}</li>`).join('') + '</ul>';
+  let h = `<h2 style="font-size:20px; margin:0 0 12px;">${activePlanDay}</h2>`;
+  if(p.courses.length){
+    h += sec('#3498DB', '🌅 Corsi — FitActive', li(p.courses.map(c => `<b>${c.name}</b> · ${c.start}–${c.end}`)));
+  } else {
+    h += sec('#6B7280', '🌅 Corsi — FitActive', '<div style="color:var(--text-dim); font-size:14px;">Nessun corso selezionato per questo giorno. Scegli i corsi in "Corsi in Palestra": qui compaiono i consigli aggiornati.</div>');
+  }
+  h += sec('#F97316', '💪 Ego del giorno', `<div style="font-size:17px; font-weight:800; margin-bottom:10px;">${p.routine.title}</div><button class="btn btn-primary" onclick="startRoutineById('${p.routine.id}')">Inizia ${p.routine.title.split(' — ')[0]}</button>`);
+  if(p.skips.length) h += sec('#27AE60', '✂️ Puoi saltare', li(p.skips.map(x => x.text)));
+  if(p.reduce.length) h += sec('#F39C12', '⬇️ Riduci', li(p.reduce));
+  h += sec('#8E44AD', '⏱ Ordine consigliato', li([
+    p.courses.length ? 'Prima i corsi FitActive, poi Ego almeno 4-5 ore dopo (pomeriggio o sera).' : 'Workout completo, quando preferisci.',
+    'Nei giorni con corsi di gambe o pesi evita di caricare gli stessi muscoli subito dopo.'
+  ]));
+  h += '<p class="sub" style="font-size:12px;">Sono consigli generali: le serie da ridurre non cambiano le tue schede. Lascia almeno un giorno più leggero a settimana (Pilates, Yoga o riposo).</p>';
+  document.getElementById('plan-body').innerHTML = h;
+}
 
 /* ============ CORSI IN PALESTRA ============ */
 let myGymWeek = JSON.parse(localStorage.getItem('gym_my_week') || '{}');
