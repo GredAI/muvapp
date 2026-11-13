@@ -85,6 +85,7 @@ Timer di recupero: pausa, ±15s, salta. Timer a tempo (⏱️ in sessione): fasi
 - `DIET_PLAN` + `openDiet()` / `#view-diet`: schermata "🥗 Piano alimentare" in home (sola lettura): norme, pasti, integrazione, pasto libero.
 - `ILLUS` (inline SVG, chiave = nome esercizio): disegno stilizzato macchina/postura mostrato sopra le istruzioni (`#ex-illus`) per i 25 esercizi Ego. Gli altri esercizi non hanno ancora disegni.
 - **Piano del giorno** (`#view-plan`, `planForDay(day)`, `COURSE_RULES`): dai corsi selezionati in "La mia settimana in palestra" sceglie il workout Ego con meno sovrapposizione (a parità, rotazione per giorno) e suggerisce cosa saltare (cardio iniziale se HIIT/Tabata/Circuit…, addominali finali se ABS/SixPack/GAG) e dove ridurre le serie (gambe/parte alta già lavorate). Sono solo consigli: le schede non cambiano. La card "Oggi" in home mostra il riassunto. Il chip Ego è subito dopo Tutte.
+- `SUBS` + `openSubs()` / `#view-subs`: schermata "🔄 Cibi sostitutivi" (alimenti equivalenti e grammi per categoria del piano alimentare; scambi indicativi ±10-15%, da confermare col coach).
 - Misure corporee (peso, % grasso, ecc.) volutamente NON nel codice: il repo è pubblico.
 
 ## Da fare / in sospeso
