@@ -848,7 +848,7 @@ const DIET_PLAN = {
       '2) 200 g albumi + 45 g crema di riso (pancake) + 70 g banana',
       '3) 160 g albumi + 1 uovo intero + 40 g Wasa integrali' ]},
     { title:'Spuntino mattina', items:['1 uovo intero + 150 g albumi'] },
-    { title:'Spuntino pomeriggio', items:['150 g yogurt greco zero + 35 g proteine isolate'] },
+    { title:'Spuntino pomeriggio (scegli uno)', items:['150 g yogurt greco zero','35 g proteine isolate'] },
     { title:'Pranzo', items:[
       'Primo (scegli uno): 60 g pasta di farro/kamut · 60 g cous cous integrale · 70 g riso Venere',
       'Secondo (scegli uno): 150 g petto di pollo o pesce bianco · 150 g vitello magro · 180 g orata · 160 g tacchino',
@@ -875,8 +875,10 @@ const SUBS = [
     ['250 g','Albumi','meno proteine (≈ 26 g)'] ]},
   { title:'Spuntino del mattino', color:'#F39C12', ref:'1 uovo + 150 g albumi', macro:'≈ 150 kcal · 23 g proteine', items:[
     ['100 g','Tonno al naturale (scolato)'], ['150 g','Fiocchi di latte light'], ['80 g','Bresaola','sale alto'], ['30 g','Proteine isolate','≈ 110 kcal · 27 g proteine'] ]},
-  { title:'Spuntino del pomeriggio', color:'#16A085', ref:'150 g yogurt greco zero + 35 g proteine isolate', macro:'≈ 215 kcal · 46 g proteine', items:[
-    ['200 g + 20 g','Skyr + proteine isolate'], ['250 g + 15 g','Fiocchi di latte light + proteine isolate'] ]},
+  { title:'Spuntino del pomeriggio — yogurt', color:'#16A085', ref:'150 g yogurt greco zero', macro:'≈ 85 kcal · 15 g proteine', items:[
+    ['80-100 g + 1 uovo','Albume + uovo intero','≈ 115-125 kcal · 15-17 g proteine · ≈ 5 g grassi'], ['150 g','Skyr','≈ 95 kcal · 16 g proteine'], ['150 g','Fiocchi di latte light','≈ 105 kcal · 18 g proteine'] ]},
+  { title:'Spuntino del pomeriggio — proteine isolate', color:'#16A085', ref:'35 g proteine isolate', macro:'≈ 130 kcal · 31 g proteine', items:[
+    ['300 g','Albume','≈ 147 kcal · 31 g proteine · ≈ 1 g grassi'], ['240 g + 1 uovo','Albume + uovo intero','≈ 190 kcal · 31 g proteine · ≈ 5 g grassi'], ['250 g','Fiocchi di latte light','≈ 175 kcal · 30 g proteine'] ]},
   { title:'Colazione — carboidrato', color:'#8E44AD', ref:'40 g crema di riso', macro:'≈ 145 kcal · 32 g carboidrati', items:[
     ['40 g','Fiocchi d\'avena','più fibra, circa 3 g di grassi'], ['40 g','Wasa integrali'], ['40 g','Fette biscottate integrali'] ]},
   { title:'Primo di pranzo', color:'#3498DB', ref:'60 g pasta di farro o kamut', macro:'≈ 205 kcal · 40 g carboidrati', items:[
