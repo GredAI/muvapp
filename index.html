@@ -154,6 +154,12 @@
   .my-week-day-label{color:var(--accent); font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:14px 0 8px;}
   .my-week-day-label:first-child{margin-top:0;}
   .my-week-row{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;}
+  .ex-notes{display:none; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px; margin-bottom:14px;}
+  .ex-notes .en-title{font-weight:800; font-size:13px; color:var(--accent); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px;}
+  .ex-notes .en-last{font-size:13px; color:var(--text-dim); margin-bottom:10px; line-height:1.4;}
+  .ex-notes input, .ex-notes textarea{width:100%; box-sizing:border-box; background:var(--bg-card2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:16px; padding:10px 12px; font-family:inherit; margin-bottom:8px;}
+  .ex-notes textarea{min-height:64px; resize:vertical; margin-bottom:0;}
+  .ex-notes .en-saved{font-size:11px; color:var(--text-dim); margin-top:6px; min-height:14px;}
   .ex-illus{display:none; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:8px; margin-bottom:14px; text-align:center;}
   .ex-illus svg{width:100%; max-width:300px; height:auto;}
   .empty-hint{color:var(--text-dim); font-size:14px; text-align:center; padding:40px 20px;}
@@ -257,6 +263,7 @@
 
     <div class="ex-illus" id="ex-illus"></div>
     <div class="instructions" id="ex-instructions"></div>
+    <div class="ex-notes" id="ex-notes"></div>
 
     <button class="btn btn-primary" id="btn-complete-set" onclick="onSetButton()">Inizia Serie</button>
     <button class="btn btn-ghost" id="btn-cancel-set" style="display:none; margin-top:8px;" onclick="cancelActiveSet()">Annulla</button>
@@ -1140,6 +1147,7 @@ function renderExercise(){
   const il = document.getElementById('ex-illus');
   if(ILLUS[ex.name]){ il.innerHTML = ILLUS[ex.name]; il.style.display = 'block'; } else { il.innerHTML = ''; il.style.display = 'none'; }
   document.getElementById('ex-instructions').textContent = ex.instr;
+  renderExNotes();
   renderSetDots(ex);
   renderSetButton(ex);
 }
@@ -1533,6 +1541,48 @@ function toggleSetting(key){ settings[key] = !settings[key]; document.getElement
 function stepSetting(key, delta){ settings[key] = Math.max(15, settings[key]+delta); document.getElementById('val-'+key).textContent = settings[key]; }
 function saveSettings(){ localStorage.setItem('ac_settings', JSON.stringify(settings)); }
 
+/* ============ NOTE E PESI (esercizi Ego) ============ */
+// ex_notes = { "routineId|nomeEsercizio": [ {d:'AAAA-MM-GG', w:'40', n:'nota'} ] } — salvato sul telefono
+function loadExNotes(){ try{ return JSON.parse(localStorage.getItem('ex_notes') || '{}'); }catch(e){ return {}; } }
+function exNoteKey(){ return session.routine.id + '|' + currentExercise().name; }
+function todayISO(){ const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+function renderExNotes(){
+  const box = document.getElementById('ex-notes');
+  if(!session || session.routine.category !== 'Ego'){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  const entries = loadExNotes()[exNoteKey()] || [];
+  const today = todayISO();
+  const todayE = entries.find(e => e.d === today);
+  const last = entries.filter(e => e.d < today).sort((a,b) => a.d < b.d ? 1 : -1)[0];
+  box.style.display = 'block';
+  box.innerHTML = `<div class="en-title">📝 Peso e note</div>
+    <div class="en-last" id="en-last"></div>
+    <input id="en-weight" type="text" inputmode="decimal" placeholder="Peso usato (kg)" autocomplete="off">
+    <textarea id="en-note" placeholder="Note (sensazioni, regolazioni macchina, ecc.)"></textarea>
+    <div class="en-saved" id="en-saved"></div>`;
+  const lastEl = document.getElementById('en-last');
+  if(last){
+    const dt = new Date(last.d + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short'});
+    lastEl.textContent = 'Ultima volta (' + dt + '): ' + (last.w ? last.w + ' kg' : 'peso non indicato') + (last.n ? ' — ' + last.n : '');
+  } else { lastEl.style.display = 'none'; }
+  const w = document.getElementById('en-weight'), n = document.getElementById('en-note');
+  if(todayE){ w.value = todayE.w || ''; n.value = todayE.n || ''; }
+  w.addEventListener('input', saveExNote);
+  n.addEventListener('input', saveExNote);
+}
+function saveExNote(){
+  const w = document.getElementById('en-weight').value.trim();
+  const n = document.getElementById('en-note').value.trim();
+  const all = loadExNotes();
+  const key = exNoteKey();
+  const today = todayISO();
+  let list = (all[key] || []).filter(e => e.d !== today);
+  if(w || n) list.push({ d: today, w: w, n: n });
+  list.sort((a,b) => a.d < b.d ? -1 : 1);
+  if(list.length) all[key] = list; else delete all[key];
+  localStorage.setItem('ex_notes', JSON.stringify(all));
+  document.getElementById('en-saved').textContent = (w || n) ? 'Salvato ✓' : '';
+}
+
 /* ============ BACKUP DATI ============ */
 function exportBackup(){
   const backup = {
@@ -1542,6 +1592,7 @@ function exportBackup(){
     ac_history: JSON.parse(localStorage.getItem('ac_history') || '[]'),
     gym_calories: JSON.parse(localStorage.getItem('gym_calories') || '{}'),
     gym_my_week: JSON.parse(localStorage.getItem('gym_my_week') || '{}'),
+    ex_notes: JSON.parse(localStorage.getItem('ex_notes') || '{}'),
   };
   const dateStr = new Date().toISOString().slice(0,10);
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
@@ -1565,6 +1616,7 @@ function importBackup(file){
       if(data.ac_history) localStorage.setItem('ac_history', JSON.stringify(data.ac_history));
       if(data.gym_calories) localStorage.setItem('gym_calories', JSON.stringify(data.gym_calories));
       if(data.gym_my_week) localStorage.setItem('gym_my_week', JSON.stringify(data.gym_my_week));
+      if(data.ex_notes) localStorage.setItem('ex_notes', JSON.stringify(data.ex_notes));
       document.getElementById('backup-status').textContent = 'Backup importato ✓ — ricarico...';
       setTimeout(() => location.reload(), 800);
     }catch(err){

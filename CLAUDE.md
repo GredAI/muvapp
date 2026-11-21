@@ -34,6 +34,7 @@ Tutto in **localStorage** del dispositivo, nessun backend/cloud. Chiavi usate:
 - `ac_history` — array di date ISO delle sessioni di allenamento completate
 - `gym_calories` — oggetto `{nomeCorso: kcal}`, inserito manualmente dall'utente
 - `gym_my_week` — oggetto `{"Giorno|NomeCorso|OraInizio": true}`, selezione personale dei corsi che l'utente intende fare
+- `ex_notes` — `{"routineId|nomeEsercizio": [{d:'AAAA-MM-GG', w:'peso kg', n:'nota'}]}`: peso e note per esercizio, solo schede Ego (una voce per giorno; compare "Ultima volta"). Incluso in backup/import. Dati personali: il file di backup NON va messo nel repo (pubblico).
 
 Backup/ripristino in Impostazioni (⚙️ in home): **Salva backup** scarica un JSON con tutte le chiavi sopra; **Importa backup** le ripristina da file.
 
