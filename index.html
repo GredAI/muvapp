@@ -92,6 +92,7 @@
   .nav-row{display:flex; justify-content:space-between; align-items:center; margin-top:auto; padding-top:16px; gap:10px;}
   .nav-row .iconbtn{flex-shrink:0;}
   .exnum{color:var(--text-dim); font-size:13px; text-align:center;}
+  .routine-badge{text-align:center; font-weight:700; font-size:15px; color:#FF9500; background:rgba(255,149,0,.14); border-radius:10px; padding:8px 10px; margin:0 0 10px;}
   /* OVERLAYS */
   .overlay{position:fixed; inset:0; background:var(--bg); display:none; flex-direction:column; align-items:center; justify-content:center; padding:24px; z-index:50;}
   .overlay.active{display:flex;}
@@ -256,6 +257,7 @@
         <button class="iconbtn" onclick="openTempoModal()">⏱️</button>
       </div>
     </div>
+    <div class="routine-badge" id="ex-routine"></div>
     <div class="progressbar"><div class="progressbar-fill" id="progress-fill"></div></div>
 
     <div class="section-label" id="ex-section" style="display:none;"></div>
@@ -1187,6 +1189,7 @@ function currentProgress(){ return session.progress[session.exIndex]; }
 function renderExercise(){
   const r = session.routine, ex = currentExercise();
   document.getElementById('ex-counter').textContent = `Esercizio ${session.exIndex+1}/${r.exercises.length}`;
+  document.getElementById('ex-routine').textContent = r.title;
   document.getElementById('progress-fill').style.width = ((session.exIndex)/r.exercises.length*100) + '%';
   const sectionEl = document.getElementById('ex-section');
   if(ex.section){ sectionEl.textContent = ex.section; sectionEl.style.display = 'block'; }
