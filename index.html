@@ -377,7 +377,8 @@
     <button class="btn btn-secondary" onclick="adjustRest(15)">+15s</button>
   </div>
   <div class="overlay-actions">
-    <button class="btn btn-primary" onclick="skipRest()">Salta recupero</button>
+    <button class="btn btn-primary" onclick="skipRest()" id="rest-skip-btn">Salta recupero</button>
+    <button class="btn btn-secondary" onclick="cancelWork()" id="rest-cancel-btn" style="display:none;">Annulla serie</button>
   </div>
 </div>
 
@@ -802,7 +803,7 @@ const ROUTINES = [
       { name:'French Press con manubri (da seduto)', muscles:['Tricipiti'], equip:'Manubrio', instr:'Setup: seduto con la schiena appoggiata. Impugna un manubrio con entrambe le mani e portalo sopra la testa, a braccia quasi distese.\nEsecuzione: gomiti vicini alla testa e rivolti verso l\'alto. Fletti i gomiti abbassando il manubrio dietro la testa, poi estendi le braccia senza inarcare la zona lombare.\nRichiede buona mobilità della spalla: se senti fastidio, riduci il carico o usa la triceps machine o le spinte in basso.', sets:4, reps:'12', section:'Tricipiti' },
       { name:'Triceps Machine', muscles:['Tricipiti'], equip:'Macchina', instr:'Setup: regola il sedile in modo che i gomiti siano all\'altezza dell\'asse della macchina, schiena aderente e spalle basse.\nEsecuzione: premi verso il basso estendendo le braccia, senza bloccare del tutto i gomiti, poi risali lentamente. Tieni i gomiti vicini al corpo e le spalle ferme.', sets:3, reps:'12', section:'Tricipiti' },
       { name:'Spinte in basso (pushdown)', muscles:['Tricipiti'], equip:'Cavo', instr:'Setup: in piedi davanti al cavo, busto leggermente inclinato in avanti, polsi neutri.\nEsecuzione: gomiti vicini ai fianchi e fermi (se si spostano in avanti lavorano i dorsali e non il tricipite). Spingi in basso fino a estendere le braccia, senza bloccare i gomiti, poi risali lentamente fino a circa 90°.', sets:3, reps:'12', section:'Tricipiti' },
-      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto a ritmo controllato. Sdraiato con le ginocchia piegate e i piedi a terra, avvicina cassa toracica e bacino contraendo l\'addome. Collo e spalle rilassati, zona lombare a terra. Non tirare la testa con le mani, evita lo slancio e la spinta con i flessori dell\'anca. Espira mentre sali.', sets:3, reps:'1 min', section:'Finale' },
+      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto a ritmo controllato. Sdraiato con le ginocchia piegate e i piedi a terra, avvicina cassa toracica e bacino contraendo l\'addome. Collo e spalle rilassati, zona lombare a terra. Non tirare la testa con le mani, evita lo slancio e la spinta con i flessori dell\'anca. Espira mentre sali.', sets:3, reps:'1 min', dur:60, section:'Finale' },
     ]
   },
   {
@@ -823,7 +824,7 @@ const ROUTINES = [
       { name:'Leg Curl da seduta', muscles:['Gambe'], equip:'Macchina', instr:'Setup: siediti con i piedi alla larghezza del bacino, addome contratto, punte dei piedi verso di te. Ginocchio allineato all\'asse della macchina, cuscinetto sul polpaccio basso o sul tendine d\'Achille, cuscino sulle cosce ben fermo.\nEsecuzione: fletti le ginocchia portando i talloni sotto di te, contrai il femorale, poi risali lentamente senza far appoggiare i pesi.', sets:3, reps:'10', section:'Femorali' },
       { name:'Hack Squat', muscles:['Gambe'], equip:'Macchina', instr:'Setup: spalle sotto i cuscini, schiena e bacino aderenti allo schienale, piedi alla larghezza delle spalle e non troppo in alto sulla pedana. Rilascia i fermi di sicurezza.\nEsecuzione: scendi in modo controllato fino a circa 90° di ginocchio, con il bacino appoggiato e i piedi interamente a terra; ginocchia in linea con le punte dei piedi. Spingi con tutto il piede, talloni a terra, senza bloccare le ginocchia in alto.', sets:3, reps:'12', section:'Femorali' },
       { name:'Leg Curl sdraiata', muscles:['Gambe'], equip:'Macchina', instr:'Setup: sdraiati a pancia in giù, testa in linea con la schiena, scapole indietro e in basso, anche premute sulla panca. Ginocchia all\'altezza dell\'asse, cuscinetto appena sopra i talloni.\nEsecuzione: fletti le ginocchia portando i talloni verso i glutei e contrai il femorale. Scendi lentamente (almeno 2-3 secondi), senza inarcare la schiena.', sets:2, reps:'15', section:'Femorali' },
-      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto a ritmo controllato. Sdraiato con le ginocchia piegate e i piedi a terra, avvicina cassa toracica e bacino contraendo l\'addome. Collo e spalle rilassati, zona lombare a terra. Non tirare la testa con le mani, evita lo slancio e la spinta con i flessori dell\'anca. Espira mentre sali.', sets:3, reps:'1 min', section:'Finale' },
+      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto a ritmo controllato. Sdraiato con le ginocchia piegate e i piedi a terra, avvicina cassa toracica e bacino contraendo l\'addome. Collo e spalle rilassati, zona lombare a terra. Non tirare la testa con le mani, evita lo slancio e la spinta con i flessori dell\'anca. Espira mentre sali.', sets:3, reps:'1 min', dur:60, section:'Finale' },
     ]
   },
   {
@@ -842,7 +843,7 @@ const ROUTINES = [
       { name:'Spinte in alto con manubri', muscles:['Spalle'], equip:'Manubri', instr:'Setup: seduto con la schiena appoggiata, piedi a terra, addome contratto. Manubri all\'altezza delle spalle, palmi in avanti, scapole giù e indietro.\nEsecuzione: spingi in alto fino a estendere i gomiti, senza inarcare la zona lombare. Scendi in modo controllato, tirando i pesi verso le spalle con i dorsali (non lasciarli cadere).', sets:5, reps:'12', section:'Spalle' },
       { name:'Curl alla panca Scott', muscles:['Bicipiti'], equip:'Panca Scott + bilanciere/manubri', instr:'Setup: regola il sedile in modo che le ascelle poggino sul bordo del cuscino e braccia e petto restino a contatto con il cuscino.\nEsecuzione: fletti i gomiti portando il peso verso le spalle, senza staccare i gomiti dal cuscino. Scendi lentamente (2-3 secondi): la fase di discesa conta. La posizione è instabile, quindi usa un carico moderato.', sets:4, reps:'12/15', section:'Bicipiti' },
       { name:'Curl con manubri alternati', muscles:['Bicipiti'], equip:'Manubri', instr:'In piedi o seduto, gomiti fermi lungo i fianchi, palmi in avanti. Fletti un braccio alla volta ruotando il polso verso l\'alto, contrai il bicipite e scendi lentamente. Evita di dondolare il busto o di spingere con le spalle.', sets:4, reps:'10/12', section:'Bicipiti' },
-      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto a ritmo controllato. Sdraiato con le ginocchia piegate e i piedi a terra, avvicina cassa toracica e bacino contraendo l\'addome. Collo e spalle rilassati, zona lombare a terra. Non tirare la testa con le mani, evita lo slancio e la spinta con i flessori dell\'anca. Espira mentre sali.', sets:3, reps:'1 min', section:'Finale' },
+      { name:'Addominali', muscles:['Core'], equip:'Corpo libero', instr:'3 serie da 1 minuto a ritmo controllato. Sdraiato con le ginocchia piegate e i piedi a terra, avvicina cassa toracica e bacino contraendo l\'addome. Collo e spalle rilassati, zona lombare a terra. Non tirare la testa con le mani, evita lo slancio e la spinta con i flessori dell\'anca. Espira mentre sali.', sets:3, reps:'1 min', dur:60, section:'Finale' },
     ]
   },
 ];
@@ -1244,8 +1245,13 @@ function onSetButton(){
     renderSetButton(ex);
     renderSetDots(ex);
     saveSession();
+    if(ex.dur) startRest(ex.dur, 'work');
     return;
   }
+  completeSet();
+}
+function completeSet(){
+  const ex = currentExercise();
   session.progress[session.exIndex]++;
   session.setPhase = 'ready';
   renderSetDots(ex);
@@ -1295,7 +1301,7 @@ function saveSession(){
     const restOn = document.getElementById('overlay-rest').classList.contains('active') && restState && !restState.paused;
     localStorage.setItem(SESSION_KEY, JSON.stringify({
       id: session.routine.id, exIndex: session.exIndex, progress: session.progress,
-      setPhase: session.setPhase, t: Date.now(), restEnd: restOn ? restEndAt : 0
+      setPhase: session.setPhase, t: Date.now(), restEnd: restOn ? restEndAt : 0, restKind: restOn ? (restState.kind||'rest') : ''
     }));
   }catch(e){}
 }
@@ -1312,7 +1318,7 @@ function tryResumeSession(){
   requestWakeLock();
   renderExercise();
   showToast('Allenamento ripreso: ' + routine.title.split(' — ')[0] + ' · esercizio ' + (session.exIndex + 1) + '/' + routine.exercises.length, 4500);
-  if(d.restEnd && d.restEnd - Date.now() > 1500){ startRest(Math.round((d.restEnd - Date.now())/1000)); }
+  if(d.restEnd && d.restEnd - Date.now() > 1500){ startRest(Math.round((d.restEnd - Date.now())/1000), d.restKind === 'work' ? 'work' : 'rest'); }
   return true;
 }
 
@@ -1502,10 +1508,14 @@ function showView(id){
 
 /* ============ REST TIMER ============ */
 let restEndAt = 0, lastBeepSec = -1;
-function startRest(seconds){
+function startRest(seconds, kind){
   ensureAudio();
-  restState = { total: seconds, remaining: seconds, paused: false };
-  document.getElementById('rest-title').textContent = 'Recupero prima della prossima serie';
+  kind = kind || 'rest';
+  restState = { total: seconds, remaining: seconds, paused: false, kind: kind };
+  const isWork = kind === 'work';
+  document.getElementById('rest-title').textContent = isWork ? ('ESECUZIONE — Serie ' + (currentProgress()+1) + '/' + currentExercise().sets) : 'Recupero prima della prossima serie';
+  document.getElementById('rest-skip-btn').textContent = isWork ? 'Fine serie' : 'Salta recupero';
+  document.getElementById('rest-cancel-btn').style.display = isWork ? 'block' : 'none';
   document.getElementById('rest-pause-btn').textContent = 'Pausa';
   document.getElementById('overlay-rest').classList.remove('done');
   lastBeepSec = -1;
@@ -1528,6 +1538,12 @@ function runRestTick(){
     if(msLeft <= 0){
       clearInterval(restTimerId);
       const lateMs = -msLeft;
+      if(restState.kind === 'work'){
+        closeRestOverlay();
+        if(lateMs > 4000){ showToast('⏱ Il tempo della serie è finito — segna la serie completata', 5000); }
+        else { alarm(); completeSet(); }
+        return;
+      }
       if(lateMs > 4000){
         // scaduto mentre eri su un'altra app: niente allarme, avviso e basta
         closeRestOverlay();
@@ -1560,7 +1576,13 @@ function pauseRest(){
   restState.paused = !restState.paused;
   document.getElementById('rest-pause-btn').textContent = restState.paused ? 'Riprendi' : 'Pausa';
 }
-function skipRest(){ clearInterval(restTimerId); closeRestOverlay(); }
+function skipRest(){
+  clearInterval(restTimerId);
+  const w = restState && restState.kind === 'work';
+  closeRestOverlay();
+  if(w && session) completeSet();
+}
+function cancelWork(){ clearInterval(restTimerId); closeRestOverlay(); if(session) cancelActiveSet(); }
 function closeRestOverlay(){ document.getElementById('overlay-rest').classList.remove('active'); document.getElementById('overlay-rest').classList.remove('done'); restEndAt = 0; saveSession(); }
 
 /* ============ TEMPO TIMER (fasi configurabili) ============ */

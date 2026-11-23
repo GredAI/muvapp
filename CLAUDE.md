@@ -90,6 +90,8 @@ Timer di recupero: pausa, ±15s, salta. Timer a tempo (⏱️ in sessione): fasi
 - `SUBS` + `openSubs()` / `#view-subs`: schermata "🔄 Cibi sostitutivi" (alimenti equivalenti e grammi per categoria del piano alimentare; scambi indicativi ±10-15%, da confermare col coach).
 - Misure corporee (peso, % grasso, ecc.) volutamente NON nel codice: il repo è pubblico.
 
+- **Esercizi a tempo (`dur` in secondi, es. Addominali `dur:60`)**: "Inizia Serie N" avvia il cronometro di esecuzione (overlay `#overlay-rest` con `restState.kind='work'`, pulsanti "Fine serie" / "Annulla serie"); allo scadere suona `alarm()`, la serie si segna fatta (`completeSet()`) e parte in automatico il cronometro di recupero. Ripresa sessione salva `restKind`.
+
 ## Da fare / in sospeso
 - Collegare Workout 1/2/3 ai giorni della settimana (da chiedere all'utente); eventuale check ogni 2 settimane.
 - **Immagini illustrative per esercizio** (richiesta dall'utente, non ancora implementata): l'utente vorrebbe un'immagine/disegno che mostri l'esecuzione di ogni esercizio (come nelle schede PNG originali). In questa sessione non è stato possibile generare immagini fotorealistiche (nessun tool di image-gen disponibile) né ricevere le foto originali come file (arrivano solo incollate in chat, non allegate). Opzioni discusse con l'utente: (a) icone/pittogrammi generici per tipo di movimento creati da zero, (b) foto vere fornite dall'utente e collegate una per una, (c) entrambe. Nessuna scelta finale presa — riprendere da qui.
