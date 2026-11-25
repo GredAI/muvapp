@@ -167,6 +167,16 @@
   .my-week-day-label{color:var(--accent); font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:14px 0 8px;}
   .my-week-day-label:first-child{margin-top:0;}
   .my-week-row{background:var(--bg-card); border:1px solid var(--border); border-radius:14px; padding:12px 14px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;}
+  .ms-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+  .ms-f{display:block; font-size:12px; color:var(--text-dim); font-weight:600;}
+  .ms-wide{grid-column:1 / -1;}
+  .ms-f input{width:100%; box-sizing:border-box; margin-top:4px; background:var(--bg-card2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:16px; padding:10px 12px; font-family:inherit;}
+  .ms-row{background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:10px;}
+  .ms-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:800;}
+  .ms-vals{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .ms-v{font-size:11px; color:var(--text-dim);}
+  .ms-v b{display:block; font-size:16px; color:var(--text);}
+  .ms-v i{display:block; font-style:normal; font-size:11px;}
   .ex-notes{display:none; background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px; margin-bottom:14px;}
   .ex-notes .en-title{font-weight:800; font-size:13px; color:var(--accent); text-transform:uppercase; letter-spacing:.6px; margin-bottom:8px;}
   .ex-notes .en-last{font-size:13px; color:var(--text-dim); margin-bottom:10px; line-height:1.4;}
@@ -215,6 +225,14 @@
       <div>
         <div class="glc-title">🔄 Cibi sostitutivi</div>
         <div class="glc-sub">Alimenti equivalenti e grammi, per la ricomposizione</div>
+      </div>
+      <span style="color:var(--text-dim);">→</span>
+    </div>
+
+    <div class="gym-link-card" onclick="openMisure()">
+      <div>
+        <div class="glc-title">📏 Misurazioni</div>
+        <div class="glc-sub">Kg, BF, BW, MM, Kcal, BMI con data e variazioni</div>
       </div>
       <span style="color:var(--text-dim);">→</span>
     </div>
@@ -343,6 +361,41 @@
     <div id="diet-body"></div>
   </div>
 
+  <!-- MISURAZIONI VIEW -->
+  <div class="view" id="view-misure">
+    <div class="topbar" style="padding:0 0 10px;">
+      <button class="iconbtn" onclick="goHome()">✕</button>
+      <div class="exnum">Misurazioni</div>
+      <div style="width:42px;"></div>
+    </div>
+    <div class="card">
+      <div class="en-title" style="font-weight:800; font-size:13px; color:var(--accent); text-transform:uppercase; letter-spacing:.6px; margin-bottom:10px;" id="ms-form-title">Nuova rilevazione</div>
+      <div class="ms-grid">
+        <label class="ms-f ms-wide">Data<input id="ms-d" type="date"></label>
+        <label class="ms-f">Kg<input id="ms-kg" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ms-f">BF %<input id="ms-bf" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ms-f">BW %<input id="ms-bw" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ms-f">MM<input id="ms-mm" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ms-f">Kcal<input id="ms-kcal" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ms-f">BMI<input id="ms-bmi" type="text" inputmode="decimal" autocomplete="off"></label>
+      </div>
+      <button class="btn btn-primary" style="margin-top:12px;" onclick="saveMisura()">Salva rilevazione</button>
+      <button class="btn btn-secondary" style="margin-top:8px; display:none;" id="ms-cancel" onclick="resetMisuraForm()">Annulla modifica</button>
+    </div>
+    <div id="ms-list"></div>
+    <div class="card">
+      <div style="font-weight:800; margin-bottom:6px;">Cosa significano le sigle</div>
+      <ul class="notes-list">
+        <li><b>Kg</b> — peso corporeo.</li>
+        <li><b>BF</b> (Body Fat) — percentuale di massa grassa.</li>
+        <li><b>BW</b> (Body Water) — percentuale di acqua corporea totale.</li>
+        <li><b>MM</b> — massa magra / muscolare (tutto ciò che non è grasso: muscoli, ossa, organi, acqua).</li>
+        <li><b>Kcal</b> — valore energetico indicato dalla bilancia (di solito metabolismo basale o fabbisogno stimato). Si ricalcola sul peso e sulla massa magra.</li>
+        <li><b>BMI</b> — indice di massa corporea: peso (kg) ÷ altezza (m)². Non distingue grasso e muscolo, quindi in ricomposizione cambia poco.</li>
+      </ul>
+    </div>
+  </div>
+
   <!-- MY WEEK VIEW -->
   <div class="view" id="view-my-week">
     <div class="topbar" style="padding:0 0 10px;">
@@ -444,7 +497,7 @@
       <div class="stepper"><button onclick="stepSetting('restDefault',-15)">−</button><span class="val" id="val-restDefault">75</span><button onclick="stepSetting('restDefault',15)">+</button></div>
     </div>
     <div class="field" style="display:block;">
-      <label>Backup dati<div class="field-sub">Storico allenamenti, kcal corsi e impostazioni</div></label>
+      <label>Backup dati<div class="field-sub">Storico allenamenti, kcal corsi, note, misurazioni e impostazioni</div></label>
       <div class="row" style="margin-top:10px;">
         <button class="btn btn-secondary" onclick="exportBackup()">💾 Salva backup</button>
         <button class="btn btn-secondary" onclick="document.getElementById('import-file-input').click()">📂 Importa backup</button>
@@ -867,18 +920,19 @@ const DIET_PLAN = {
       'Pasti distanziati di circa 2,5–3 ore.',
       'Pasto solido post-allenamento entro 1–1,30 h dalla fine dell\'allenamento e dello shaker.' ]},
     { title:'Colazione (scegli una)', items:[
-      '1) 200 g Skyr o yogurt greco zero + 40 g crema di riso + 50 g banana',
-      '2) 200 g albumi + 45 g crema di riso (pancake) + 70 g banana',
+      '1) 200 g Skyr o yogurt greco zero lattosio + 40 g crema di riso + 30 g marmellata tipo Hero zero',
+      '2) 200 g albumi + 45 g crema di riso + 30 g marmellata Hero zero',
       '3) 160 g albumi + 1 uovo intero + 40 g Wasa integrali' ]},
     { title:'Spuntino mattina', items:['1 uovo intero + 150 g albumi'] },
     { title:'Spuntino pomeriggio (scegli uno)', items:['150 g yogurt greco zero','35 g proteine isolate'] },
     { title:'Pranzo', items:[
       'Primo (scegli uno): 60 g pasta di farro/kamut · 60 g cous cous integrale · 70 g riso Venere',
-      'Secondo (scegli uno): 150 g petto di pollo o pesce bianco · 150 g vitello magro · 180 g orata · 160 g tacchino',
-      'Contorno (scegli uno, + 5 g olio EVO): 200 g zucchine · 200 g finocchi · 160 g carote' ]},
+      'Secondo (scegli uno): 1) 150 g petto di pollo o pesce bianco · 2) 150 g vitello magro · 3) 150 g gamberetti decongelati',
+      'Contorno (scegli uno): 200 g zucchine · 200 g finocchi · 160 g carote',
+      'Aggiungi sempre 5 g di olio EVO (a crudo).' ]},
     { title:'Cena', items:[
-      '180 g patate + 180 g merluzzo o nasello (oppure 160 g vitello) + 200 g finocchi + 6 g olio EVO',
-      'Alternativa: un\'altra combinazione del pranzo non ancora consumata.' ]},
+      '1) 160 g patate + 160 g vitello (max 2 volte a settimana) + 200 g finocchi + 50 g avocado',
+      '2) Oppure un\'altra combinazione del pranzo non ancora consumata.' ]},
     { title:'Integrazione', items:[
       '3 "Alc Plus Why Sport" prima dell\'allenamento',
       '3 "Celite Why Sport" prima di dormire',
@@ -892,7 +946,7 @@ const SUBS_INTRO = 'Obiettivo: ricomposizione corporea (perdere grasso mantenend
 const SUBS = [
   { title:'Proteina di pranzo e cena', color:'#E74C3C', ref:'150 g petto di pollo', macro:'≈ 160 kcal · 33 g proteine', items:[
     ['150 g','Petto di pollo'], ['160 g','Tacchino'], ['170 g','Nasello o merluzzo'], ['150 g','Vitello magro o cavallo'],
-    ['180 g','Orata','un po\' più calorica (≈ 200 kcal)'], ['200 g','Gamberi'],
+    ['180 g','Orata','un po\' più calorica (≈ 200 kcal)'], ['150 g','Gamberetti decongelati','già nel piano'],
     ['170 g','Carne salada Alpenspitz','94 kcal e 19 g proteine per 100 g · molto sale: 1-2 volte a settimana, da confermare col coach'],
     ['160 g','Lonza di maiale fresca (fettine ai ferri, senza olio)','≈ 235 kcal · 33 g proteine · ≈ 11 g grassi: più calorica del pollo (+75 kcal). Togli il grasso visibile, al massimo 1 volta a settimana, da confermare col coach'],
     ['250 g','Albumi','meno proteine (≈ 26 g)'] ]},
@@ -907,8 +961,8 @@ const SUBS = [
   { title:'Primo di pranzo', color:'#3498DB', ref:'60 g pasta di farro o kamut', macro:'≈ 205 kcal · 40 g carboidrati', items:[
     ['60 g','Cous cous integrale'], ['70 g','Riso Venere','già nel piano'], ['55-60 g','Riso integrale o basmati'], ['60 g','Pasta integrale'],
     ['80 g','Pane integrale'], ['250 g','Patate'], ['130 g','Gnocchi di patate','meno fibra, indice glicemico più alto: scambio occasionale'] ]},
-  { title:'Patate a cena', color:'#27AE60', ref:'180 g patate', macro:'≈ 140 kcal · 31 g carboidrati', items:[
-    ['90 g','Gnocchi di patate','quasi il doppio delle kcal delle patate: dimezza il peso'], ['40 g','Riso o pasta (a crudo)'], ['55 g','Pane integrale'], ['160 g','Patate dolci'] ]},
+  { title:'Patate a cena', color:'#27AE60', ref:'160 g patate', macro:'≈ 125 kcal · 28 g carboidrati', items:[
+    ['80 g','Gnocchi di patate','quasi il doppio delle kcal delle patate: dimezza il peso'], ['35 g','Riso o pasta (a crudo)'], ['50 g','Pane integrale'], ['140 g','Patate dolci'] ]},
   { title:'Frutta', color:'#E67E22', ref:'50 g banana', macro:'≈ 45 kcal · 10 g carboidrati', items:[
     ['100 g','Mela o pera'], ['100 g','Arancia'], ['150 g','Frutti di bosco o fragole'] ]},
   { title:'Contorno', color:'#2ECC71', ref:'200 g zucchine o finocchi', macro:'≈ 35-40 kcal', items:[
@@ -1736,6 +1790,76 @@ function saveExNote(){
   document.getElementById('en-saved').textContent = (w || n) ? 'Salvato ✓' : '';
 }
 
+/* ============ MISURAZIONI (Kg, BF, BW, MM, Kcal, BMI) ============ */
+// body_checks = [ {d:'AAAA-MM-GG', kg, bf, bw, mm, kcal, bmi} ] — solo sul telefono (incluso nel backup)
+const MS_FIELDS = [['kg','Kg','kg'],['bf','BF','%'],['bw','BW','%'],['mm','MM',''],['kcal','Kcal',''],['bmi','BMI','']];
+let msEditDate = null;
+function loadMisure(){ try{ return JSON.parse(localStorage.getItem('body_checks') || '[]'); }catch(e){ return []; } }
+function msNum(v){ const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
+function msFmt(n){ return n === null || n === undefined ? '—' : String(Math.round(n*100)/100).replace('.', ','); }
+function openMisure(){ showView('view-misure'); resetMisuraForm(); renderMisure(); }
+function resetMisuraForm(){
+  msEditDate = null;
+  document.getElementById('ms-d').value = todayISO();
+  MS_FIELDS.forEach(f => document.getElementById('ms-' + f[0]).value = '');
+  document.getElementById('ms-form-title').textContent = 'Nuova rilevazione';
+  document.getElementById('ms-cancel').style.display = 'none';
+}
+function saveMisura(){
+  const d = document.getElementById('ms-d').value || todayISO();
+  const e = { d: d };
+  let any = false;
+  MS_FIELDS.forEach(f => { const v = msNum(document.getElementById('ms-' + f[0]).value); if(v !== null){ e[f[0]] = v; any = true; } });
+  if(!any){ showToast('Inserisci almeno un valore', 2500); return; }
+  let list = loadMisure().filter(x => x.d !== d && x.d !== msEditDate);
+  list.push(e);
+  list.sort((a,b) => a.d < b.d ? -1 : 1);
+  localStorage.setItem('body_checks', JSON.stringify(list));
+  showToast('Rilevazione salvata ✓', 2000);
+  resetMisuraForm(); renderMisure();
+}
+function editMisura(d){
+  const e = loadMisure().find(x => x.d === d); if(!e) return;
+  msEditDate = d;
+  document.getElementById('ms-d').value = d;
+  MS_FIELDS.forEach(f => document.getElementById('ms-' + f[0]).value = e[f[0]] !== undefined ? String(e[f[0]]).replace('.', ',') : '');
+  document.getElementById('ms-form-title').textContent = 'Modifica rilevazione';
+  document.getElementById('ms-cancel').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+function deleteMisura(d){
+  if(!confirm('Eliminare la rilevazione del ' + d + '?')) return;
+  localStorage.setItem('body_checks', JSON.stringify(loadMisure().filter(x => x.d !== d)));
+  renderMisure();
+}
+function renderMisure(){
+  const list = loadMisure();
+  const wrap = document.getElementById('ms-list');
+  if(!list.length){ wrap.innerHTML = '<div class="card" style="color:var(--text-dim); font-size:14px;">Nessuna rilevazione ancora. Inserisci la prima qui sopra.</div>'; return; }
+  const html = list.map((e, i) => ({ e: e, prev: i > 0 ? list[i-1] : null })).reverse().map(o => {
+    const e = o.e, prev = o.prev;
+    const dt = new Date(e.d + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'long', year:'numeric'});
+    const cells = MS_FIELDS.map(f => {
+      const v = e[f[0]];
+      let delta = '';
+      if(prev && v !== undefined && prev[f[0]] !== undefined){
+        const diff = v - prev[f[0]];
+        const pct = prev[f[0]] !== 0 ? diff / prev[f[0]] * 100 : 0;
+        const sign = diff > 0 ? '+' : (diff < 0 ? '−' : '');
+        delta = '<i>' + sign + msFmt(Math.abs(diff)) + ' (' + sign + msFmt(Math.abs(pct)) + '%)</i>';
+      }
+      return '<div class="ms-v">' + f[1] + '<b>' + msFmt(v === undefined ? null : v) + (v !== undefined && f[2] ? ' ' + f[2] : '') + '</b>' + delta + '</div>';
+    }).join('');
+    return '<div class="ms-row"><div class="ms-head"><span>' + dt + '</span><span>' +
+      '<button class="iconbtn" style="width:34px; height:34px; font-size:14px;" onclick="editMisura(\'' + e.d + '\')">✏️</button> ' +
+      '<button class="iconbtn" style="width:34px; height:34px; font-size:14px;" onclick="deleteMisura(\'' + e.d + '\')">🗑</button></span></div>' +
+      '<div class="ms-vals">' + cells + '</div>' +
+      (prev ? '<div class="ms-v" style="margin-top:8px;">Variazione rispetto al ' + new Date(prev.d + 'T12:00:00').toLocaleDateString('it-IT', {day:'numeric', month:'short'}) + ': differenza assoluta (e in %)</div>' : '') +
+      '</div>';
+  }).join('');
+  wrap.innerHTML = html;
+}
+
 /* ============ BACKUP DATI ============ */
 function exportBackup(){
   const backup = {
@@ -1746,6 +1870,7 @@ function exportBackup(){
     gym_calories: JSON.parse(localStorage.getItem('gym_calories') || '{}'),
     gym_my_week: JSON.parse(localStorage.getItem('gym_my_week') || '{}'),
     ex_notes: JSON.parse(localStorage.getItem('ex_notes') || '{}'),
+    body_checks: JSON.parse(localStorage.getItem('body_checks') || '[]'),
   };
   const dateStr = new Date().toISOString().slice(0,10);
   const blob = new Blob([JSON.stringify(backup, null, 2)], {type:'application/json'});
@@ -1770,6 +1895,7 @@ function importBackup(file){
       if(data.gym_calories) localStorage.setItem('gym_calories', JSON.stringify(data.gym_calories));
       if(data.gym_my_week) localStorage.setItem('gym_my_week', JSON.stringify(data.gym_my_week));
       if(data.ex_notes) localStorage.setItem('ex_notes', JSON.stringify(data.ex_notes));
+      if(data.body_checks) localStorage.setItem('body_checks', JSON.stringify(data.body_checks));
       document.getElementById('backup-status').textContent = 'Backup importato ✓ — ricarico...';
       setTimeout(() => location.reload(), 800);
     }catch(err){

@@ -36,6 +36,8 @@ Tutto in **localStorage** del dispositivo, nessun backend/cloud. Chiavi usate:
 - `gym_my_week` — oggetto `{"Giorno|NomeCorso|OraInizio": true}`, selezione personale dei corsi che l'utente intende fare
 - `ex_notes` — `{"routineId|nomeEsercizio": [{d:'AAAA-MM-GG', w:'peso kg', n:'nota'}]}`: peso e note per esercizio, solo schede Ego (una voce per giorno; compare "Ultima volta"). Incluso in backup/import. Dati personali: il file di backup NON va messo nel repo (pubblico).
 
+- `body_checks` — `[{d:'AAAA-MM-GG', kg, bf, bw, mm, kcal, bmi}]`: misurazioni corporee inserite a mano da "📏 Misurazioni" (variazione assoluta e % rispetto alla rilevazione precedente). Solo sul telefono, incluso nel backup; NESSUN valore nel codice (repo pubblico).
+
 Backup/ripristino in Impostazioni (⚙️ in home): **Salva backup** scarica un JSON con tutte le chiavi sopra; **Importa backup** le ripristina da file.
 
 **Nota importante:** come per Vivenda, il profilo Home Screen (icona installata) e Safari hanno storage **isolati** su iOS. Svuotare la cache/dati di Safari non cancella i dati della app installata. Per cancellarli davvero serve Impostazioni → Generali → Spazio iPhone → Muvapp → Elimina App.
@@ -88,7 +90,7 @@ Timer di recupero: pausa, ±15s, salta. Timer a tempo (⏱️ in sessione): fasi
 - **Sessione**: swipe orizzontale sulla schermata esercizio = avanti/indietro. Lo stato dell'allenamento in corso è salvato in `ac_active_session` (esercizio, serie, fine recupero) e ripreso all'avvio (`tryResumeSession`, max 6 h). Fine recupero: `alarm()` forte + voce "Recupero finito" (impostazione `voice`) + flash; se il recupero scade mentre l'app è in background (iOS sospende i timer) all'ingresso compare solo un avviso. iOS non permette allarmi in background senza server push.
 - **Piano del giorno** (`#view-plan`, `planForDay(day)`, `COURSE_RULES`): dai corsi selezionati in "La mia settimana in palestra" sceglie il workout Ego con meno sovrapposizione (a parità, rotazione per giorno) e suggerisce cosa saltare (cardio iniziale se HIIT/Tabata/Circuit…, addominali finali se ABS/SixPack/GAG) e dove ridurre le serie (gambe/parte alta già lavorate). Sono solo consigli: le schede non cambiano. La card "Oggi" in home mostra il riassunto. Il chip Ego è subito dopo Tutte.
 - `SUBS` + `openSubs()` / `#view-subs`: schermata "🔄 Cibi sostitutivi" (alimenti equivalenti e grammi per categoria del piano alimentare; scambi indicativi ±10-15%, da confermare col coach).
-- Misure corporee (peso, % grasso, ecc.) volutamente NON nel codice: il repo è pubblico.
+- Misure corporee: solo l'app (campi in `#view-misure`), nessun valore nel codice: il repo è pubblico.
 
 - **Esercizi a tempo (`dur` in secondi, es. Addominali `dur:60`)**: "Inizia Serie N" avvia il cronometro di esecuzione (overlay `#overlay-rest` con `restState.kind='work'`, pulsanti "Fine serie" / "Annulla serie"); allo scadere suona `alarm()`, la serie si segna fatta (`completeSet()`) e parte in automatico il cronometro di recupero. Ripresa sessione salva `restKind`.
 
