@@ -173,7 +173,7 @@
   .ms-f input{width:100%; box-sizing:border-box; margin-top:4px; background:var(--bg-card2); border:1px solid var(--border); border-radius:10px; color:var(--text); font-size:16px; padding:10px 12px; font-family:inherit;}
   .ms-row{background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); padding:12px 14px; margin-bottom:10px;}
   .ms-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-weight:800;}
-  .ms-vals{display:grid; grid-template-columns:repeat(3,1fr); gap:8px;}
+  .ms-vals{display:grid; grid-template-columns:repeat(4,1fr); gap:8px;}
   .ms-v{font-size:11px; color:var(--text-dim);}
   .ms-v b{display:block; font-size:16px; color:var(--text);}
   .ms-v i{display:block; font-style:normal; font-size:11px;}
@@ -377,6 +377,7 @@
         <label class="ms-f">BW %<input id="ms-bw" type="text" inputmode="decimal" autocomplete="off"></label>
         <label class="ms-f">MM<input id="ms-mm" type="text" inputmode="decimal" autocomplete="off"></label>
         <label class="ms-f">Kcal<input id="ms-kcal" type="text" inputmode="decimal" autocomplete="off"></label>
+        <label class="ms-f">BM<input id="ms-bm" type="text" inputmode="decimal" autocomplete="off"></label>
         <label class="ms-f">BMI<input id="ms-bmi" type="text" inputmode="decimal" autocomplete="off"></label>
       </div>
       <button class="btn btn-primary" style="margin-top:12px;" onclick="saveMisura()">Salva rilevazione</button>
@@ -391,6 +392,7 @@
         <li><b>BW</b> (Body Water) — percentuale di acqua corporea totale.</li>
         <li><b>MM</b> — massa magra / muscolare (tutto ciò che non è grasso: muscoli, ossa, organi, acqua).</li>
         <li><b>Kcal</b> — valore energetico indicato dalla bilancia (di solito metabolismo basale o fabbisogno stimato). Si ricalcola sul peso e sulla massa magra.</li>
+        <li><b>BM</b> — valore indicato dalla bilancia biometrica (significato esatto da verificare nell'app della bilancia, di solito Bone Mass o Basal Metabolism).</li>
         <li><b>BMI</b> — indice di massa corporea: peso (kg) ÷ altezza (m)². Non distingue grasso e muscolo, quindi in ricomposizione cambia poco.</li>
       </ul>
     </div>
@@ -1818,7 +1820,7 @@ function saveExNote(){
 
 /* ============ MISURAZIONI (Kg, BF, BW, MM, Kcal, BMI) ============ */
 // body_checks = [ {d:'AAAA-MM-GG', kg, bf, bw, mm, kcal, bmi} ] — solo sul telefono (incluso nel backup)
-const MS_FIELDS = [['kg','Kg','kg'],['bf','BF','%'],['bw','BW','%'],['mm','MM',''],['kcal','Kcal',''],['bmi','BMI','']];
+const MS_FIELDS = [['kg','Kg','kg'],['bf','BF','%'],['bw','BW','%'],['mm','MM',''],['kcal','Kcal',''],['bm','BM',''],['bmi','BMI','']];
 let msEditDate = null;
 function loadMisure(){ try{ return JSON.parse(localStorage.getItem('body_checks') || '[]'); }catch(e){ return []; } }
 function msNum(v){ const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; }
