@@ -496,6 +496,14 @@
       <label>Recupero predefinito<div class="field-sub">Tra una serie e l'altra</div></label>
       <div class="stepper"><button onclick="stepSetting('restDefault',-15)">−</button><span class="val" id="val-restDefault">75</span><button onclick="stepSetting('restDefault',15)">+</button></div>
     </div>
+    <div class="field">
+      <label>Dimensione testo<div class="field-sub">Verticale (100% = normale)</div></label>
+      <div class="stepper"><button onclick="stepText('textScale',-10,100,200)">−</button><span class="val" id="val-textScale">100%</span><button onclick="stepText('textScale',10,100,200)">+</button></div>
+    </div>
+    <div class="field">
+      <label>Testo extra in orizzontale<div class="field-sub">Si somma quando giri il telefono</div></label>
+      <div class="stepper"><button onclick="stepText('landscapeExtra',-10,0,100)">−</button><span class="val" id="val-landscapeExtra">+20%</span><button onclick="stepText('landscapeExtra',10,0,100)">+</button></div>
+    </div>
     <div class="field" style="display:block;">
       <label>Backup dati<div class="field-sub">Storico allenamenti, kcal corsi, note, misurazioni e impostazioni</div></label>
       <div class="row" style="margin-top:10px;">
@@ -924,7 +932,7 @@ const DIET_PLAN = {
       '2) 200 g albumi + 45 g crema di riso + 30 g marmellata Hero zero',
       '3) 160 g albumi + 1 uovo intero + 40 g Wasa integrali' ]},
     { title:'Spuntino mattina', items:['1 uovo intero + 150 g albumi'] },
-    { title:'Spuntino pomeriggio (scegli uno)', items:['150 g yogurt greco zero','35 g proteine isolate'] },
+    { title:'Spuntino pomeriggio (scegli uno)', items:['1) 150 g yogurt greco zero','2) 35 g proteine isolate','3) 160 g albume'] },
     { title:'Pranzo', items:[
       'Primo (scegli uno): 60 g pasta di farro/kamut · 60 g cous cous integrale · 70 g riso Venere',
       'Secondo (scegli uno): 1) 150 g petto di pollo o pesce bianco · 2) 150 g vitello magro · 3) 150 g gamberetti decongelati',
@@ -1741,11 +1749,29 @@ function openSettings(){
   document.getElementById('switch-sound').classList.toggle('on', settings.sound);
   document.getElementById('switch-voice').classList.toggle('on', !!settings.voice);
   document.getElementById('val-restDefault').textContent = settings.restDefault;
+  document.getElementById('val-textScale').textContent = textScaleVal() + '%';
+  document.getElementById('val-landscapeExtra').textContent = '+' + landscapeExtraVal() + '%';
   document.getElementById('modal-settings').classList.add('active');
 }
 function closeSettings(){ document.getElementById('modal-settings').classList.remove('active'); saveSettings(); }
 function toggleSetting(key){ settings[key] = !settings[key]; document.getElementById('switch-'+key).classList.toggle('on', settings[key]); }
 function stepSetting(key, delta){ settings[key] = Math.max(15, settings[key]+delta); document.getElementById('val-'+key).textContent = settings[key]; }
+function textScaleVal(){ return settings.textScale || 100; }
+function landscapeExtraVal(){ return settings.landscapeExtra === undefined ? 20 : settings.landscapeExtra; }
+function applyTextScale(){
+  const land = window.innerWidth > window.innerHeight;
+  const pct = textScaleVal() + (land ? landscapeExtraVal() : 0);
+  document.documentElement.style.webkitTextSizeAdjust = pct + '%';
+  document.documentElement.style.textSizeAdjust = pct + '%';
+}
+function stepText(key, delta, min, max){
+  const cur = key === 'textScale' ? textScaleVal() : landscapeExtraVal();
+  settings[key] = Math.min(max, Math.max(min, cur + delta));
+  document.getElementById('val-'+key).textContent = (key === 'textScale' ? '' : '+') + settings[key] + '%';
+  saveSettings(); applyTextScale();
+}
+window.addEventListener('resize', applyTextScale);
+window.addEventListener('orientationchange', () => setTimeout(applyTextScale, 150));
 function saveSettings(){ localStorage.setItem('ac_settings', JSON.stringify(settings)); }
 
 /* ============ NOTE E PESI (esercizi Ego) ============ */
@@ -1906,6 +1932,7 @@ function importBackup(file){
 }
 
 /* ============ INIT ============ */
+applyTextScale();
 renderHome();
 tryResumeSession();
 if('serviceWorker' in navigator){

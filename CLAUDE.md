@@ -30,7 +30,7 @@ Poi su iPhone: chiudere del tutto l'app (swipe su dall'app switcher, non solo to
 
 ### Storage
 Tutto in **localStorage** del dispositivo, nessun backend/cloud. Chiavi usate:
-- `ac_settings` — `{sound, restDefault}`
+- `ac_settings` — `{sound, restDefault, voice, textScale (100-200, %), landscapeExtra (0-100, % aggiunta in orizzontale, default 20)}`: dimensione testo via `-webkit-text-size-adjust` su `<html>` (`applyTextScale()`, ricalcolata a resize/orientationchange)
 - `ac_history` — array di date ISO delle sessioni di allenamento completate
 - `gym_calories` — oggetto `{nomeCorso: kcal}`, inserito manualmente dall'utente
 - `gym_my_week` — oggetto `{"Giorno|NomeCorso|OraInizio": true}`, selezione personale dei corsi che l'utente intende fare
